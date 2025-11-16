@@ -5,6 +5,7 @@ import HomeScreen from '../Screens/HomeScreen'
 import MenuScreen from '../Screens/MenuScreen'
 import CarritoScreen from '../Screens/CarritoScreen'
 import ProfileScreen from '../Screens/ProfileScreen'
+import LoginScreen from '../Screens/LoginScreen'
 
 const Tab = createBottomTabNavigator()
 

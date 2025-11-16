@@ -1,12 +1,203 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Image,
+} from "react-native";
+import React from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParams } from "../Navigation/StackN";
+import { useState } from "react";
+import { useFonts } from "expo-font";
 
-const LoginRegisterScreen = () => {
+type HomeNavProp = StackNavigationProp<RootStackParams, "Login">;
+
+type Props = {
+  navigation: HomeNavProp;
+};
+
+const LoginScreen = ({ navigation }: Props) => {
+const [loaded] = useFonts({
+  Montserrat: require("../assets/Fonts/Montserrat-VariableFont_wght.ttf"),
+  Poppins_xbold: require("../assets/Fonts/Poppins-ExtraBold.ttf"),
+  Poppins_bold: require("../assets/Fonts/Poppins-Bold.ttf"), 
+  Poppins_sbold: require("../assets/Fonts/Poppins-SemiBold.ttf"),
+  Poppins_nbold: require("../assets/Fonts/Poppins-Medium.ttf"),
+  Inter: require("../assets/Fonts/Inter-VariableFont_opsz,wght.ttf"),
+})
+
+if (!loaded) return null;
+
+
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+
+  const [checked, setChecked] = useState(false);
+
   return (
-    <View>
-      <Text>LoginRegisterScreen</Text>
-    </View>
-  )
-}
+    <LinearGradient
+      style={style.container}
+      colors={["#fff", "#f0f0f0", "#ffaf60", "#ff6b00"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <Text style={style.logo}>Logo</Text>
+      <View style={style.card}>
+        <Text style={style.title}>Bienvenido</Text>
+        <Text style={style.text}>
+          Bienvenido de nuevo, ingreses sus datos por favor
+        </Text>
 
-export default LoginRegisterScreen
+        <Text style={style.label}>Email</Text>
+        <TextInput
+          style={style.input}
+          value={email}
+          onChangeText={setEmail}
+        ></TextInput>
+
+        <Text style={style.label}>Contraseña</Text>
+        <TextInput
+          style={style.input}
+          value={pass}
+          onChangeText={setPass}
+        ></TextInput>
+
+        <View style={style.remember}>
+          <TouchableOpacity
+            style={style.recordar}
+            onPress={() => setChecked(!checked)}
+          >
+            <View style={[style.box, checked && style.boxChecked]}></View>
+            <Text style={{ fontSize: 12, fontWeight: 900, }}>Recordar</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 12, fontWeight: 900 }}>
+            ¿Olvidaste tu contraseña?
+          </Text>
+        </View>
+
+        <TouchableOpacity
+        onPress={() => navigation.navigate("Home")}
+          style={[style.button, { backgroundColor: "#ff6b00" }]}
+        >
+          <Text style={style.textbtn}>Ingresar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
+          <Image source={require("../assets/Icons/Google.png")} />
+          <Text style={style.textbtn}>Ingresar con Google</Text>
+        </TouchableOpacity>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            gap: 15,
+            marginTop: 20,
+          }}
+        >
+          <Text style={{ fontSize: 16, fontWeight: 900 }}>
+            ¿No tienes cuenta?
+          </Text>
+          <TouchableOpacity onPress={()=> navigation.navigate("Register")}>
+            <Text style={{ fontSize: 16, fontWeight: 900, color: "#ff6b00" }}>
+              Registrate
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </LinearGradient>
+  );
+};
+
+export default LoginScreen;
+
+const style = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logo: {
+    backgroundColor: "#fff",
+    width: 150,
+    height: 150,
+    fontSize: 25,
+    fontWeight: "bold",
+    lineHeight: 145,
+    borderColor: "#ffb600",
+    borderWidth: 2,
+    textAlign: "center",
+    borderRadius: 100,
+  },
+  card: {
+    width: 300,
+    height: 500,
+    padding: 20,
+    marginTop: 40,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+  },
+  title: {
+    fontWeight: 900,
+    fontSize: 24,
+  },
+  text: {
+    color: "#676767ff",
+    fontWeight: 700,
+    fontSize: 14,
+    marginVertical: 5,
+  },
+  label: {
+    fontWeight: 700,
+    paddingLeft: 3,
+    fontSize: 20,
+    marginTop: 10,
+  },
+  input: {
+    width: "100%",
+    height: 40,
+    borderColor: "#ff6b00",
+    borderWidth: 1,
+    borderRadius: 7,
+  },
+  remember: {
+    marginTop: 10,
+    display: "flex",
+    width: "100%",
+    justifyContent: "space-between",
+    flexDirection: "row",
+  },
+  recordar: {
+    gap: 5,
+    display: "flex",
+    flexDirection: "row",
+  },
+  box: {
+    width: 16,
+    height: 16,
+    borderWidth: 2,
+    borderColor: "#ff6b00",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  boxChecked: {
+    backgroundColor: "#ff1b00",
+  },
+  button: {
+    width: "100%",
+    marginTop: 10,
+    borderRadius: 5,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textbtn: {
+    textAlign: "center",
+    color: "#fff",
+    fontWeight: 700,
+    fontSize: 20,
+    padding: 10,
+  },
+});
