@@ -81,6 +81,7 @@ if (!loaded) return null;
           </TouchableOpacity>
 
         <TouchableOpacity
+        onPress={() => navigation.navigate("Home")}
           style={[style.button, { backgroundColor: "#ff6b00" }]}
         >
           <Text style={style.textbtn}>Registrar</Text>
