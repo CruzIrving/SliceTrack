@@ -12,8 +12,6 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParams } from "../Navigation/StackN";
 import { useState } from "react";
 
-import { useFonts } from "expo-font";
-
 type HomeNavProp = StackNavigationProp<RootStackParams, "Login">;
 
 type Props = {
@@ -21,16 +19,6 @@ type Props = {
 };
 
 const RegisterScreen = ({ navigation }: Props) => {
-const [loaded] = useFonts({
-  Montserrat: require("../assets/Fonts/Montserrat-VariableFont_wght.ttf"),
-  Poppins_xbold: require("../assets/Fonts/Poppins-ExtraBold.ttf"),
-  Poppins_bold: require("../assets/Fonts/Poppins-Bold.ttf"), 
-  Poppins_sbold: require("../assets/Fonts/Poppins-SemiBold.ttf"),
-  Poppins_nbold: require("../assets/Fonts/Poppins-Medium.ttf"),
-  Inter: require("../assets/Fonts/Inter-VariableFont_opsz,wght.ttf"),
-})
-
-if (!loaded) return null;
 
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
