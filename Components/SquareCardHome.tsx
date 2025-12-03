@@ -14,7 +14,7 @@ const SquareCardHome = ({
     <View style={style.squarecard}>
       <TouchableOpacity>
         <Image style={style.pizza} source={img} />
-        <Text style={style.name}>{name}</Text>
+        <Text style={style.name}>{name}</Text>  
         <Text style={style.price}>${price}</Text>
       </TouchableOpacity>
     </View>
@@ -27,6 +27,7 @@ const style = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "#fff",
     padding: 10,
+    elevation: 5,
   },
   pizza: {
     marginRight: "auto",
