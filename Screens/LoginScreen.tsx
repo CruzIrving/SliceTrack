@@ -12,6 +12,9 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParams } from "../Navigation/StackN";
 import { useState } from "react";
 
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../Utils/firebase";
+
 type HomeNavProp = StackNavigationProp<RootStackParams, "Login">;
 
 type Props = {
@@ -19,10 +22,55 @@ type Props = {
 };
 
 const LoginScreen = ({ navigation }: Props) => {
-
+  const  [ loading, setLoading ] = useState(false);
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [error, setError] = useState("");
   const [checked, setChecked] = useState(false);
+
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  };
+
+  const validate = () => {
+    if (!email.trim()) return "El correo no puede estar vacío.";
+    if (!validateEmail(email.trim())) return "Formato de correo inválido.";
+    if (!pass.trim()) return "La contraseña no puede estar vacía.";
+    if (pass.length < 6)
+      return "La contraseña debe tener al menos 6 caracteres.";
+
+    return null;
+  };
+
+  const handleLogin = async () => {
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      setLoading(true)
+      await signInWithEmailAndPassword(auth, email.trim(), pass.trim());
+    } catch (e: any) {
+      switch (e.code) {
+        case "auth/invalid-credential":
+          setError("Correo o contraseña incorrectos.");
+          break;
+        case "auth/user-disabled":
+          setError("Este usuario está deshabilitado.");
+          break;
+        case "auth/too-many-requests":
+          setError("Demasiados intentos. Intenta más tarde.");
+          break;
+        default:
+          setError("Error inesperado. Intenta de nuevo.");
+      }
+    }finally{
+      setLoading(false)
+    }
+  };
 
   return (
     <LinearGradient
@@ -42,15 +90,20 @@ const LoginScreen = ({ navigation }: Props) => {
         <TextInput
           style={style.input}
           value={email}
-          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          onChangeText={(text) => setEmail(text.trim())}
         ></TextInput>
 
         <Text style={style.label}>Contraseña</Text>
         <TextInput
+          secureTextEntry
           style={style.input}
           value={pass}
           onChangeText={setPass}
         ></TextInput>
+
+        {!!error && <Text style={{ color: "#f00" }}>{error}</Text>}
 
         <View style={style.remember}>
           <TouchableOpacity
@@ -58,7 +111,7 @@ const LoginScreen = ({ navigation }: Props) => {
             onPress={() => setChecked(!checked)}
           >
             <View style={[style.box, checked && style.boxChecked]}></View>
-            <Text style={{ fontSize: 12, fontWeight: 900, }}>Recordar</Text>
+            <Text style={{ fontSize: 12, fontWeight: 900 }}>Recordar</Text>
           </TouchableOpacity>
           <Text style={{ fontSize: 12, fontWeight: 900 }}>
             ¿Olvidaste tu contraseña?
@@ -66,10 +119,11 @@ const LoginScreen = ({ navigation }: Props) => {
         </View>
 
         <TouchableOpacity
-        onPress={() => navigation.navigate("Home")}
+          onPress={handleLogin}
           style={[style.button, { backgroundColor: "#ff6b00" }]}
         >
-          <Text style={style.textbtn}>Ingresar</Text>
+          <Text style={style.textbtn}>
+            { loading ? "Cargando..." : "Ingresar"}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
           <Image source={require("../assets/Icons/Google.png")} />
@@ -86,7 +140,7 @@ const LoginScreen = ({ navigation }: Props) => {
           <Text style={{ fontSize: 16, fontWeight: 900 }}>
             ¿No tienes cuenta?
           </Text>
-          <TouchableOpacity onPress={()=> navigation.navigate("Register")}>
+          <TouchableOpacity onPress={() => navigation.navigate("Register")}>
             <Text style={{ fontSize: 16, fontWeight: 900, color: "#ff6b00" }}>
               Registrate
             </Text>

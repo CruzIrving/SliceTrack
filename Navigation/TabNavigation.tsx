@@ -1,5 +1,4 @@
-import { Image } from "react-native";
-import React, { useState } from "react";
+import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../Screens/HomeScreen";
 import MenuScreen from "../Screens/MenuScreen";
@@ -13,7 +12,6 @@ import Feather from '@expo/vector-icons/Feather';
 const Tab = createBottomTabNavigator();
 
 const TabNavigation = () => {
-  const [focus, setFocus] = useState(false);
 
   return (
     <Tab.Navigator

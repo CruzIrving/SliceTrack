@@ -6,7 +6,22 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 
+import { signOut } from "firebase/auth";
+import { auth } from "../Utils/firebase";
+import { useAuthStore } from "../Utils/store_auth";
+
 const ProfileScreen = () => {
+  const setUser = useAuthStore((s) => s.setUser);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null); // limpia el estado global
+    } catch (error) {
+      console.log("Error al cerrar sesión:", error);
+    }
+  };
+
   return (
     <View style={{ alignItems: "center" }}>
       <View style={style.header}>
@@ -45,7 +60,7 @@ const ProfileScreen = () => {
         <Text style={style.optext}>Configuracion</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={handleLogout}>
         <Text style={style.close}>Cerrar sesión</Text>
       </TouchableOpacity>
     </View>

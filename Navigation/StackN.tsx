@@ -27,11 +27,6 @@ const StackN = () => {
         component={RegisterScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="Home"
-        component={TabNavigation}
-        options={{ headerShown: false }}
-      />
     </Stack.Navigator>
   );
 };
