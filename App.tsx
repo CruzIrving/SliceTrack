@@ -6,7 +6,8 @@ import { useAuthStore } from "./Utils/store_auth";
 import TabNavigation from "./Navigation/TabNavigation";
 import { useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./Utils/firebase"; // tu config de firebase
+import { auth } from "./Utils/firebase";
+import { CartProvider } from "./Components/CartContext";
 
 export default function App() {
   const user = useAuthStore((s) => s.user);
@@ -16,7 +17,6 @@ export default function App() {
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
     });
-
     return unsub;
   }, []);
 
@@ -32,9 +32,11 @@ export default function App() {
   if (!loaded) return null;
 
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      {user ? <TabNavigation /> : <StackN />}
-    </NavigationContainer>
+    <CartProvider>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        {user ? <TabNavigation /> : <StackN />}
+      </NavigationContainer>
+    </CartProvider>
   );
 }

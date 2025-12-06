@@ -5,16 +5,18 @@ const SquareCardHome = ({
   name,
   price,
   img,
+  onPress,
 }: {
   name: string;
   price: number;
   img: any;
+  onPress?: () => void;
 }) => {
   return (
     <View style={style.squarecard}>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={onPress}>
         <Image style={style.pizza} source={img} />
-        <Text style={style.name}>{name}</Text>  
+        <Text style={style.name}>{name}</Text>
         <Text style={style.price}>${price}</Text>
       </TouchableOpacity>
     </View>

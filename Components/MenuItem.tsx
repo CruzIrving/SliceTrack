@@ -2,20 +2,20 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import Entypo from '@expo/vector-icons/Entypo';
 import React from 'react'
 
-const MenuItem = ({name, size, price, image}: {name: string, size: string, price: number, image: any } ) => {
-  return (
-    <View style={style.element}>
-        <Image style={style.img} source={image}></Image>
-        <View>
-            <Text style={style.name}>{name}</Text>
-            <Text style={style.size}>{size}</Text>
+const MenuItem = ({name, size, price, image, onPress}: {name: string, size: string, price: number, image: any, onPress?: () => void } ) => {
+    return (
+        <View style={style.element}>
+                <Image style={style.img} source={image}></Image>
+                <View>
+                        <Text style={style.name}>{name}</Text>
+                        <Text style={style.size}>{size}</Text>
+                </View>
+                <TouchableOpacity onPress={onPress}>
+                <Entypo style={style.icon} name="plus" size={24} color="white" />
+                <Text style={style.price}>${price}</Text>
+                </TouchableOpacity>
         </View>
-        <TouchableOpacity>
-        <Entypo style={style.icon} name="plus" size={24} color="white" />
-        <Text style={style.price}>${price}</Text>
-        </TouchableOpacity>
-    </View>
-  )
+    )
 }
 
 const style = StyleSheet.create({

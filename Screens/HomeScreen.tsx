@@ -1,3 +1,4 @@
+import React from "react";
 import {
   View,
   Text,
@@ -7,13 +8,15 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import React from "react";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import SquareCardHome from "../Components/SquareCardHome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useCart } from "../Components/CartContext";
 
 const HomeScreen = () => {
+  const { addToCart } = useCart();
+
   return (
     <ScrollView style={style.container}>
       <View style={style.header}>
@@ -37,7 +40,7 @@ const HomeScreen = () => {
         <TextInput
           style={style.searchtext}
           placeholder="¿Qué se te antoja hoy?"
-        ></TextInput>
+        />
         <TouchableOpacity style={{ marginLeft: "auto", marginRight: 10 }}>
           <Text style={{ fontSize: 20, color: "#ff6b00" }}>Buscar</Text>
         </TouchableOpacity>
@@ -45,10 +48,10 @@ const HomeScreen = () => {
 
       <View style={style.promo}>
         <View style={style.promotext}>
-          <Text style={{ fontSize: 20, fontWeight: 900, color: "#fff" }}>
+          <Text style={{ fontSize: 20, fontWeight: "900", color: "#fff" }}>
             2x1
           </Text>
-          <Text style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: "#fff" }}>
             Pizza Familiar
           </Text>
         </View>
@@ -57,6 +60,7 @@ const HomeScreen = () => {
           source={require("../assets/Images/image 2.png")}
         />
       </View>
+
       <View style={style.buttons}>
         <TouchableOpacity style={style.btn}>
           <FontAwesome5
@@ -86,65 +90,72 @@ const HomeScreen = () => {
           <Text style={{ fontSize: 16 }}> Combos</Text>
         </TouchableOpacity>
       </View>
+
       <Text style={style.advice}>
         <Text style={{ color: "#ff6b00" }}>Nueva:</Text> Pizza Bombina!
       </Text>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: 900,
-          textAlign: "left",
-          marginRight: "auto",
-        }}
-      >
-        Pizzas populares
-      </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          width: "100%",
-          marginBottom: 20,
-        }}
-      >
+
+      <Text style={style.sectionTitle}>Pizzas populares</Text>
+
+      <View style={style.row}>
         <SquareCardHome
           name="Pizza Pollo Búfalo"
           price={220}
           img={require("../assets/Images/Pizza1.png")}
+          onPress={() =>
+            addToCart({
+              id: "pizza-pollo-bufalo-1",
+              name: "Pizza Pollo Búfalo",
+              price: 220,
+              image: require("../assets/Images/Pizza1.png"),
+            })
+          }
         />
+
         <SquareCardHome
           name="Pizza Pollo Chipotle"
           price={120}
           img={require("../assets/Images/pizza2.png")}
+          onPress={() =>
+            addToCart({
+              id: "pizza-pollo-chipotle-1",
+              name: "Pizza Pollo Chipotle",
+              price: 120,
+              image: require("../assets/Images/pizza2.png"),
+            })
+          }
         />
       </View>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: 900,
-          textAlign: "left",
-          marginRight: "auto",
-        }}
-      >
-        Pizzas Especiales
-      </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          width: "100%",
-          marginBottom: 50,
-        }}
-      >
+
+      <Text style={style.sectionTitle}>Pizzas Especiales</Text>
+
+      <View style={style.row}>
         <SquareCardHome
           name="Pizza Pollo Búfalo"
           price={220}
           img={require("../assets/Images/Pizza1.png")}
+          onPress={() =>
+            addToCart({
+              id: "pizza-pollo-bufalo-2",
+              name: "Pizza Pollo Búfalo",
+              price: 220,
+              image: require("../assets/Images/Pizza1.png"),
+            })
+          }
         />
+
         <SquareCardHome
           name="Pizza Pollo Chipotle"
           price={120}
           img={require("../assets/Images/pizza2.png")}
+          onPress={() =>
+            addToCart({
+              id: "pizza-pollo-chipotle-2",
+              name: "Pizza Pollo Chipotle",
+              price: 120,
+              image: require("../assets/Images/pizza2.png"),
+            })
+          }
         />
       </View>
     </ScrollView>
@@ -168,7 +179,7 @@ const style = StyleSheet.create({
   title: {
     fontSize: 32,
     color: "#ff6b00",
-    fontWeight: 900,
+    fontWeight: "900",
     fontFamily: "Montserrat",
   },
   profile: {
@@ -247,6 +258,19 @@ const style = StyleSheet.create({
     fontSize: 16,
     marginRight: "auto",
     marginVertical: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    textAlign: "left",
+    marginRight: "auto",
+    marginVertical: 10,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 20,
   },
 });
 
