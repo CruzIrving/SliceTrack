@@ -25,25 +25,37 @@ export type PaymentMethod = {
   cvv: string;
 };
 
+export type Order = {
+  id: string;
+  items: any[];
+  address: string;
+  createdAt: number;        // timestamp
+  estimatedDelivery: number; // timestamp
+};
+
+
 export type UserAddress = {
   id: string;
-  label: string;       // casa, trabajo, etc
-  fullAddress: string; // dirección completa
+  label: string;
+  fullAddress: string;
 };
 
 type CartContextType = {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
+
+  // 🔥 NUEVAS
+  increaseQuantity: (id: string) => void;
+  decreaseQuantity: (id: string) => void;
+
   removeFromCart: (id: string) => void;
   clearCart: () => void;
 
-  // Direcciones
   direcciones: UserAddress[];
   addDireccion: (dir: UserAddress) => Promise<void>;
   selectedDireccionId: string | null;
   setSelectedDireccion: (id: string | null) => Promise<void>;
 
-  // Pagos
   pagos: PaymentMethod[];
   addPago: (pago: PaymentMethod) => Promise<void>;
   selectedPaymentId: string | null;
@@ -55,12 +67,10 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // Direcciones
   const [direcciones, setDirecciones] = useState<UserAddress[]>([]);
   const [selectedDireccionId, setSelectedDireccionIdState] =
     useState<string | null>(null);
 
-  // Pagos
   const [pagos, setPagos] = useState<PaymentMethod[]>([]);
   const [selectedPaymentId, setSelectedPaymentIdState] =
     useState<string | null>(null);
@@ -78,11 +88,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const storedPagos = await AsyncStorage.getItem("@pagos");
       if (storedPagos) setPagos(JSON.parse(storedPagos));
 
-      const storedSelectedPago = await AsyncStorage.getItem(
-        "@selected_pago"
-      );
-      if (storedSelectedPago)
-        setSelectedPaymentIdState(storedSelectedPago);
+      const storedSelectedPago = await AsyncStorage.getItem("@selected_pago");
+      if (storedSelectedPago) setSelectedPaymentIdState(storedSelectedPago);
     })();
   }, []);
 
@@ -95,16 +102,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addDireccion = async (dir: UserAddress) => {
     const nuevas = [...direcciones, dir];
     await persistDirecciones(nuevas);
-
-    if (!selectedDireccionId) {
-      await setSelectedDireccion(dir.id);
-    }
+    if (!selectedDireccionId) await setSelectedDireccion(dir.id);
   };
 
   const setSelectedDireccion = async (id: string | null) => {
     setSelectedDireccionIdState(id);
-    if (id)
-      await AsyncStorage.setItem("@selected_direccion", id);
+    if (id) await AsyncStorage.setItem("@selected_direccion", id);
     else await AsyncStorage.removeItem("@selected_direccion");
   };
 
@@ -117,9 +120,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addPago = async (pago: PaymentMethod) => {
     const nuevos = [...pagos, pago];
     await persistPagos(nuevos);
-    if (!selectedPaymentId) {
-      await setSelectedPayment(pago.id);
-    }
+    if (!selectedPaymentId) await setSelectedPayment(pago.id);
   };
 
   const setSelectedPayment = async (id: string | null) => {
@@ -140,12 +141,37 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         };
         return copy;
       }
-      return [...prev, { ...item, quantity: item.quantity ?? 1 }];
+      return [...prev, { ...item, quantity: 1 }];
     });
+  };
+
+  // ✅ NUEVO
+  const increaseQuantity = (id: string) => {
+    setCart((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? { ...i, quantity: (i.quantity || 1) + 1 }
+          : i
+      )
+    );
+  };
+
+  // ✅ NUEVO
+  const decreaseQuantity = (id: string) => {
+    setCart((prev) =>
+      prev
+        .map((i) =>
+          i.id === id
+            ? { ...i, quantity: (i.quantity || 1) - 1 }
+            : i
+        )
+        .filter((i) => (i.quantity || 0) > 0)
+    );
   };
 
   const removeFromCart = (id: string) =>
     setCart((prev) => prev.filter((i) => i.id !== id));
+
   const clearCart = () => setCart([]);
 
   return (
@@ -153,6 +179,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       value={{
         cart,
         addToCart,
+
+        increaseQuantity,
+        decreaseQuantity,
+
         removeFromCart,
         clearCart,
 

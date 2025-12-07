@@ -20,11 +20,37 @@ type Props = {
 };
 
 const CarritoScreen = ({ navigation }: Props) => {
-  const { cart, removeFromCart, clearCart } = useCart();
+  const {
+    cart,
+    removeFromCart,
+    increaseQuantity,
+    decreaseQuantity,
+  } = useCart();
 
   const subtotal = cart.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
 
-  const envio = 20;
+  let envio = 0;
+
+  switch (true) {
+    case subtotal < 100:
+      envio = 100;
+      break;
+    case subtotal < 200:
+      envio = 50;
+      break;
+    case subtotal < 300:
+      envio = 40;
+      break;
+    case subtotal < 400:
+      envio = 20;
+      break;
+    case subtotal < 500:
+      envio = 10;
+      break;
+    default:
+      envio = 0;
+  }
+
   const total = subtotal + envio;
 
   return (
@@ -43,13 +69,35 @@ const CarritoScreen = ({ navigation }: Props) => {
                   {item.image ? (
                     <Image source={item.image} style={styles.img} />
                   ) : null}
+
                   <View style={{ flex: 1 }}>
                     <Text style={styles.name}>{item.name}</Text>
                     <Text style={styles.size}>{item.size}</Text>
-                    <Text style={styles.price}>
-                      {item.quantity ?? 1} x ${item.price}
-                    </Text>
+
+                    {/* Controles de cantidad */}
+                    <View style={styles.qtyRow}>
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => decreaseQuantity(item.id)}
+                      >
+                        <Text style={styles.qtyText}>−</Text>
+                      </TouchableOpacity>
+
+                      <Text style={styles.qtyNumber}>
+                        {item.quantity ?? 1}
+                      </Text>
+
+                      <TouchableOpacity
+                        style={styles.qtyBtn}
+                        onPress={() => increaseQuantity(item.id)}
+                      >
+                        <Text style={styles.qtyText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={styles.price}>${item.price}</Text>
                   </View>
+
                   <TouchableOpacity onPress={() => removeFromCart(item.id)}>
                     <EvilIcons name="trash" size={56} color="orange" />
                   </TouchableOpacity>
@@ -58,55 +106,27 @@ const CarritoScreen = ({ navigation }: Props) => {
             />
 
             <View style={styles.footer}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  width: "100%",
-                  justifyContent: "space-between",
-                }}
-              >
+              <View style={styles.rowBetween}>
                 <Text style={styles.subtotal}>Subtotal:</Text>
                 <Text style={styles.subtotal}>${subtotal}</Text>
               </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  width: "100%",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text style={styles.subtotal}>Costo de envio:</Text>
+
+              <View style={styles.rowBetween}>
+                <Text style={styles.subtotal}>Costo de envío:</Text>
                 <Text style={styles.subtotal}>${envio}</Text>
               </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  width: "100%",
-                  justifyContent: "space-between",
-                }}
-              >
+
+              <View style={styles.rowBetween}>
                 <Text style={styles.total}>Total:</Text>
                 <Text style={styles.total}>${total}</Text>
               </View>
-              {/* <TouchableOpacity onPress={clearCart} style={styles.clearBtn}>
-                <Text style={{ color: "#fff" }}>Vaciar</Text>
-                </TouchableOpacity> */}
             </View>
+
             <TouchableOpacity
               onPress={() => navigation.navigate("Detalles")}
               style={styles.confirmbtn}
             >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontWeight: 900,
-                  textAlign: "center",
-                  fontSize: 20,
-                }}
-              >
-                {" "}
-                Confirmar pedido
-              </Text>
+              <Text style={styles.confirmText}>Confirmar pedido</Text>
             </TouchableOpacity>
           </>
         )}
@@ -131,6 +151,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   empty: { textAlign: "center", color: "#666" },
+
   item: {
     flexDirection: "row",
     alignItems: "center",
@@ -148,8 +169,33 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   name: { fontWeight: "900", fontSize: 18 },
-  price: { color: "#999", marginTop: 4, fontSize: 16, fontWeight: 900 },
-  size:{ fontWeight: 900, color: "#999", fontSize: 18, },
+  price: { color: "#999", marginTop: 4, fontSize: 16, fontWeight: "900" },
+  size: { fontWeight: "900", color: "#999", fontSize: 18 },
+
+  qtyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  qtyBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: "#ff6b00",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  qtyText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  qtyNumber: {
+    marginHorizontal: 12,
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
   footer: {
     justifyContent: "space-between",
     alignItems: "center",
@@ -159,13 +205,29 @@ const styles = StyleSheet.create({
     elevation: 5,
     padding: 20,
   },
+  rowBetween: {
+    flexDirection: "row",
+    width: "100%",
+    justifyContent: "space-between",
+  },
   subtotal: {
     color: "#3e3e3eff",
     fontSize: 20,
   },
   total: { fontSize: 24, fontWeight: "900", color: "#ff6b00" },
-  clearBtn: { backgroundColor: "#ff6b00", padding: 10, borderRadius: 8 },
-  confirmbtn: { padding: 20, backgroundColor: "#ff6b00", width: "100%" },
+
+  confirmbtn: {
+    padding: 20,
+    backgroundColor: "#ff6b00",
+    width: "100%",
+    marginTop: 10,
+  },
+  confirmText: {
+    color: "#fff",
+    fontWeight: "900",
+    textAlign: "center",
+    fontSize: 20,
+  },
 });
 
 export default CarritoScreen;

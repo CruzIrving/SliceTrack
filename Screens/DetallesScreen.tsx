@@ -39,7 +39,7 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
               <Text key={item.id} style={styles.infoText}>
                 {item.name} ({item.size ?? "Tamaño no definido"}) x{" "}
                 {item.quantity ?? 1} = ${item.price * (item.quantity || 1)}
-              </Text> 
+              </Text>
             ))}
             <Text
               style={[styles.infoText, { fontWeight: "900", marginTop: 5 }]}
@@ -51,6 +51,12 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
             <Text style={styles.changeBtn}>Modificar</Text>
           </TouchableOpacity>
         </View>
+        <TouchableOpacity
+        onPress={() => navigation.navigate("Order")}
+          style={styles.confirmbtn}
+        >
+          <Text style={styles.confirmText}>Confirmar orden</Text>
+        </TouchableOpacity>
       </ScrollView>
     </>
   );
@@ -88,6 +94,19 @@ const styles = StyleSheet.create({
   icon: { marginRight: 15 },
   infoText: { color: "#000", fontSize: 16, width: "70%" },
   changeBtn: { color: "#ff6b00", fontWeight: "bold" },
+
+  confirmbtn: {
+    padding: 20,
+    backgroundColor: "#ff6b00",
+    width: "100%",
+    marginTop: 10,
+  },
+  confirmText: {
+    color: "#fff",
+    fontWeight: "900",
+    textAlign: "center",
+    fontSize: 20,
+  },
 });
 
 export default DetallesPedidoScreen;
