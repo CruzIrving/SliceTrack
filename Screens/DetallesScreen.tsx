@@ -39,7 +39,7 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
               <Text key={item.id} style={styles.infoText}>
                 {item.name} ({item.size ?? "Tamaño no definido"}) x{" "}
                 {item.quantity ?? 1} = ${item.price * (item.quantity || 1)}
-              </Text>
+              </Text> 
             ))}
             <Text
               style={[styles.infoText, { fontWeight: "900", marginTop: 5 }]}

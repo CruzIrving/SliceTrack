@@ -1,5 +1,5 @@
 // Location.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -7,13 +7,13 @@ import {
   StyleSheet,
   Modal,
   FlatList,
+  ActivityIndicator,
   TextInput,
-  Alert,
 } from "react-native";
 import * as Location from "expo-location";
+import MapView, { Marker, Region } from "react-native-maps";
 import { useCart } from "./CartContext";
 import { Ionicons } from "@expo/vector-icons";
-import uuid from "react-native-uuid";
 
 const DireccionCard = () => {
   const {
@@ -23,24 +23,40 @@ const DireccionCard = () => {
     setSelectedDireccion,
   } = useCart();
 
+  const [showList, setShowList] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [showNewForm, setShowNewForm] = useState(direcciones.length === 0);
-  const [label, setLabel] = useState("Casa");
 
-  const direccionActual = useMemo(
-    () => direcciones.find((d) => d.id === selectedDireccionId),
-    [direcciones, selectedDireccionId]
+  const [label, setLabel] = useState("");
+  const [markerCoord, setMarkerCoord] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+  const [region, setRegion] = useState<Region | null>(null);
+
+  const tempAddress = useRef<string>("");
+
+  const selectedAddress = direcciones.find(
+    (d) => d.id === selectedDireccionId
   );
 
-  const obtenerDireccionGPS = async () => {
+  // --- Abrir lista ---
+  const abrirSelector = () => {
+    setError(null);
+    setShowList(true);
+  };
+
+  // --- Abrir mapa ---
+  const abrirMapa = async () => {
     setLoading(true);
     setError(null);
+
     try {
       const { status } =
         await Location.requestForegroundPermissionsAsync();
-
       if (status !== "granted") {
         setError("Permiso de ubicación denegado.");
         setLoading(false);
@@ -48,190 +64,239 @@ const DireccionCard = () => {
       }
 
       const location = await Location.getCurrentPositionAsync({});
-      const [placemark] = await Location.reverseGeocodeAsync(
-        location.coords
-      );
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
 
-      const direccionCompleta = `${placemark.name ?? ""} ${
-        placemark.street ?? ""
-      }, ${placemark.city ?? ""}, ${placemark.region ?? ""}, ${
-        placemark.postalCode ?? ""
-      }`;
-
-      if (!direccionCompleta.trim()) {
-        Alert.alert("Error", "No se pudo obtener la dirección.");
-        return;
-      }
-
-      // guardar dirección
-      await addDireccion({
-        id: uuid.v4().toString(),
-        label: label || "Dirección",
-        fullAddress: direccionCompleta,
+      setMarkerCoord(coords);
+      setRegion({
+        ...coords,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
       });
 
-      setShowNewForm(false);
-      setModalVisible(false);
+      setShowMap(true);
     } catch (e) {
-      console.log(e);
       setError("No se pudo obtener la ubicación.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelect = async (id: string) => {
-    await setSelectedDireccion(id);
-    setModalVisible(false);
+  // --- Confirmar pin ---
+  const confirmarPin = async () => {
+    if (!markerCoord) return;
+
+    try {
+      const [placemark] =
+        await Location.reverseGeocodeAsync(markerCoord);
+
+      tempAddress.current = `${placemark.name ?? ""} ${
+        placemark.street ?? ""
+      }, ${placemark.city ?? ""}, ${placemark.region ?? ""}, ${
+        placemark.postalCode ?? ""
+      }`;
+
+      setShowMap(false);
+      setShowForm(true);
+    } catch {
+      setError("No se pudo leer la dirección.");
+    }
+  };
+
+  // --- Guardar ---
+  const guardarDireccion = async () => {
+    if (!label.trim()) {
+      setError("Ponle nombre a la dirección 😅");
+      return;
+    }
+
+    const nueva = {
+      id: Date.now().toString(),
+      label,
+      fullAddress: tempAddress.current,
+    };
+
+    await addDireccion(nueva);
+    await setSelectedDireccion(nueva.id);
+
+    setLabel("");
+    setShowForm(false);
+    setShowList(false);
   };
 
   return (
     <>
       <Text style={styles.label}>Dirección</Text>
+
       <View style={styles.card}>
-        <View style={styles.cardContent}>
+        <View style={styles.row}>
           <Ionicons
             name="location-outline"
             size={32}
             color="#ff6b00"
             style={styles.icon}
           />
+
           <Text style={styles.infoText}>
-            {direccionActual
-              ? `${direccionActual.label}: ${direccionActual.fullAddress}`
+            {selectedAddress
+              ? `${selectedAddress.label}: ${selectedAddress.fullAddress}`
               : "No hay dirección seleccionada"}
           </Text>
-          <TouchableOpacity
-            onPress={() => {
-              setModalVisible(true);
-              setShowNewForm(direcciones.length === 0);
-            }}
-            style={styles.buttonRight}
-          >
+
+          <TouchableOpacity onPress={abrirSelector}>
             <Text style={styles.changeBtn}>
-              {direccionActual ? "Cambiar" : "Agregar"}
+              {direcciones.length > 0 ? "Cambiar" : "Agregar"}
             </Text>
           </TouchableOpacity>
         </View>
-        {error && <Text style={{ color: "red" }}>{error}</Text>}
+
+        {error && <Text style={styles.error}>{error}</Text>}
       </View>
 
-      {/* Modal */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Direcciones</Text>
+      {/* MODAL - lista de direcciones */}
+      <Modal visible={showList} animationType="slide">
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>
+            Tus direcciones
+          </Text>
 
-            {direcciones.length > 0 && !showNewForm ? (
-              <>
-                <FlatList
-                  data={direcciones}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <View style={styles.addressRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: "700" }}>
-                          {item.label}
-                        </Text>
-                        <Text style={{ color: "#666" }}>
-                          {item.fullAddress}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => handleSelect(item.id)}
-                        style={styles.selectBtn}
-                      >
-                        <Text style={{ color: "#fff" }}>
-                          Seleccionar
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                />
-
-                <TouchableOpacity
-                  onPress={() => setShowNewForm(true)}
-                  style={styles.addNewBtn}
-                >
-                  <Text
-                    style={{
-                      color: "#ff6b00",
-                      fontWeight: "700",
-                      textAlign: "center",
-                    }}
-                  >
-                    Agregar nueva dirección
-                  </Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Text style={styles.modalSubtitle}>
-                  Nueva dirección
-                </Text>
-
-                <TextInput
-                  placeholder="Nombre (Casa, Trabajo...)"
-                  value={label}
-                  onChangeText={setLabel}
-                  style={styles.input}
-                />
-
-                <TouchableOpacity
-                  onPress={obtenerDireccionGPS}
-                  style={styles.gpsBtn}
-                  disabled={loading}
-                >
-                  <Text
-                    style={{
-                      color: "#fff",
-                      textAlign: "center",
-                      fontWeight: "700",
-                    }}
-                  >
-                    {loading
-                      ? "Obteniendo..."
-                      : "Usar mi ubicación actual"}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowNewForm(false);
-                    if (direcciones.length === 0)
-                      setModalVisible(false);
-                  }}
-                  style={{ marginTop: 10 }}
-                >
-                  <Text
-                    style={{
-                      color: "#ff6b00",
-                      fontWeight: "700",
-                      textAlign: "center",
-                    }}
-                  >
-                    Cancelar
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {direcciones.length > 0 && !showNewForm && (
+          <FlatList
+            data={direcciones}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                style={{ marginTop: 10 }}
+                style={[
+                  styles.addressItem,
+                  item.id === selectedDireccionId &&
+                    styles.selectedItem,
+                ]}
+                onPress={async () => {
+                  await setSelectedDireccion(item.id);
+                  setShowList(false);
+                }}
               >
-                <Text
-                  style={{
-                    color: "#ff6b00",
-                    fontWeight: "700",
-                    textAlign: "center",
-                  }}
-                >
-                  Cerrar
+                <Text style={styles.addressLabel}>
+                  {item.label}
+                </Text>
+                <Text style={styles.addressText}>
+                  {item.fullAddress}
                 </Text>
               </TouchableOpacity>
             )}
+            ListEmptyComponent={
+              <Text style={{ textAlign: "center" }}>
+                No hay direcciones guardadas
+              </Text>
+            }
+          />
+
+          <TouchableOpacity
+            style={styles.addNewBtn}
+            onPress={() => {
+              setShowList(false);
+              abrirMapa();
+            }}
+          >
+            <Text style={styles.addNewText}>
+              + Agregar nueva
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={() => setShowList(false)}
+          >
+            <Text style={styles.cancelText}>
+              Cerrar
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* MODAL MAPA */}
+      <Modal visible={showMap} animationType="slide">
+        <View style={styles.modalContainer}>
+          {!region || !markerCoord ? (
+            <ActivityIndicator color="#ff6b00" />
+          ) : (
+            <>
+              <MapView
+                style={styles.map}
+                region={region}
+                onPress={(e) =>
+                  setMarkerCoord(e.nativeEvent.coordinate)
+                }
+              >
+                <Marker
+                  draggable
+                  coordinate={markerCoord}
+                  onDragEnd={(e) =>
+                    setMarkerCoord(e.nativeEvent.coordinate)
+                  }
+                />
+              </MapView>
+
+              <View style={styles.mapFooter}>
+                <TouchableOpacity
+                  onPress={() => setShowMap(false)}
+                  style={styles.cancelBtn}
+                >
+                  <Text style={styles.cancelText}>
+                    Cancelar
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={confirmarPin}
+                  style={styles.confirmBtn}
+                >
+                  <Text style={styles.confirmText}>
+                    Confirmar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
+      </Modal>
+
+      {/* MODAL FORM */}
+      <Modal visible={showForm} transparent>
+        <View style={styles.formOverlay}>
+          <View style={styles.formCard}>
+            <Text style={styles.modalTitle}>
+              Guarda tu dirección
+            </Text>
+
+            <TextInput
+              placeholder="Nombre (Casa, Trabajo...)"
+              style={styles.input}
+              value={label}
+              onChangeText={setLabel}
+            />
+
+            <Text style={styles.previewText}>
+              {tempAddress.current}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.confirmBtn}
+              onPress={guardarDireccion}
+            >
+              <Text style={styles.confirmText}>
+                Guardar
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowForm(false)}
+            >
+              <Text style={styles.cancelText}>
+                Cancelar
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -253,69 +318,91 @@ const styles = StyleSheet.create({
     color: "#000",
     marginBottom: 5,
   },
-  cardContent: { flexDirection: "row", alignItems: "center" },
-  icon: { marginRight: 10 },
-  infoText: { flex: 1, color: "#000", fontSize: 16 },
-  buttonRight: { marginLeft: 10 },
-  changeBtn: { color: "#ff6b00", fontWeight: "bold" },
-
-  modalBg: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  modalCard: {
-    backgroundColor: "#fff",
-    margin: 20,
-    borderRadius: 10,
-    padding: 16,
-    maxHeight: "80%",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "900",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-
-  addressRow: {
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
   },
-  selectBtn: {
-    backgroundColor: "#ff6b00",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
+  icon: { marginRight: 10 },
+  infoText: { flex: 1, color: "#000", fontSize: 16 },
+
+  changeBtn: { color: "#ff6b00", fontWeight: "bold" },
+  error: { color: "red", marginTop: 5 },
+
+  modalContainer: { flex: 1, padding: 20 },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 10,
+    color: "#000",
   },
+
+  addressItem: {
+    backgroundColor: "#f5f5f5",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  selectedItem: { borderWidth: 2, borderColor: "#ff6b00" },
+  addressLabel: { fontWeight: "bold", color: "#000" },
+  addressText: { color: "#333" },
+
   addNewBtn: {
-    marginTop: 12,
-    padding: 10,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#ff6b00",
+    marginTop: 10,
+    padding: 15,
+    alignItems: "center",
+  },
+  addNewText: {
+    color: "#ff6b00",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
+  map: { flex: 1 },
+
+  mapFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 15,
+  },
+
+  cancelBtn: {
+    alignItems: "center",
+    padding: 12,
+  },
+  cancelText: { color: "#000", fontWeight: "bold" },
+
+  confirmBtn: {
+    padding: 12,
+    backgroundColor: "#ff6b00",
+    borderRadius: 8,
+  },
+  confirmText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
+  formOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  formCard: {
+    backgroundColor: "#fff",
+    padding: 20,
+    width: "90%",
+    borderRadius: 10,
   },
 
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 6,
     padding: 10,
+    borderRadius: 8,
     marginBottom: 10,
   },
-  gpsBtn: {
-    backgroundColor: "#ff6b00",
-    padding: 12,
-    borderRadius: 8,
-  },
+
+  previewText: { color: "#000", marginBottom: 10 },
 });
 
 export default DireccionCard;
