@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: "700", color: "#ff6b00", marginBottom: 20 },
   empty: { textAlign: "center", color: "#666" },
   item: { flexDirection: "row", alignItems: "center", marginBottom: 12, backgroundColor: "#fff", padding: 10, borderRadius: 8 },
-  img: { width: 60, height: 60, borderRadius: 8, marginRight: 10 },
+  img: { width: 60, height: 60, borderRadius: 8, resizeMode: "contain", marginRight: 10 },
   name: { fontWeight: "700" },
   price: { color: "#666", marginTop: 4 },
   removeBtn: { backgroundColor: "#ff6b00", padding: 8, borderRadius: 6 },
