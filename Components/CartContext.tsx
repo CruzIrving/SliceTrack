@@ -19,10 +19,16 @@ export type CartItem = {
 
 export type PaymentMethod = {
   id: string;
-  cardNumber: string; // full number stored (consider cifrar en prod)
+  cardNumber: string;
   cardHolder: string;
-  expiry: string; // "MM/YY"
+  expiry: string;
   cvv: string;
+};
+
+export type UserAddress = {
+  id: string;
+  label: string;       // casa, trabajo, etc
+  fullAddress: string; // dirección completa
 };
 
 type CartContextType = {
@@ -30,8 +36,14 @@ type CartContextType = {
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
-  direccion: string | null;
-  setDireccion: (d: string) => void;
+
+  // Direcciones
+  direcciones: UserAddress[];
+  addDireccion: (dir: UserAddress) => Promise<void>;
+  selectedDireccionId: string | null;
+  setSelectedDireccion: (id: string | null) => Promise<void>;
+
+  // Pagos
   pagos: PaymentMethod[];
   addPago: (pago: PaymentMethod) => Promise<void>;
   selectedPaymentId: string | null;
@@ -42,47 +54,69 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [direccion, setDireccionState] = useState<string | null>(null);
-  const [pagos, setPagos] = useState<PaymentMethod[]>([]);
-  const [selectedPaymentId, setSelectedPaymentIdState] = useState<
-    string | null
-  >(null);
 
-  // Cargar dirección desde AsyncStorage al iniciar
+  // Direcciones
+  const [direcciones, setDirecciones] = useState<UserAddress[]>([]);
+  const [selectedDireccionId, setSelectedDireccionIdState] =
+    useState<string | null>(null);
+
+  // Pagos
+  const [pagos, setPagos] = useState<PaymentMethod[]>([]);
+  const [selectedPaymentId, setSelectedPaymentIdState] =
+    useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
-      const stored = await AsyncStorage.getItem("@direccion");
-      if (stored) setDireccionState(stored);
+      const storedDirecciones = await AsyncStorage.getItem("@direcciones");
+      if (storedDirecciones) setDirecciones(JSON.parse(storedDirecciones));
+
+      const storedSelectedDir = await AsyncStorage.getItem(
+        "@selected_direccion"
+      );
+      if (storedSelectedDir) setSelectedDireccionIdState(storedSelectedDir);
 
       const storedPagos = await AsyncStorage.getItem("@pagos");
       if (storedPagos) setPagos(JSON.parse(storedPagos));
 
-      const storedSelected = await AsyncStorage.getItem("@selected_pago");
-      if (storedSelected) setSelectedPaymentIdState(storedSelected);
+      const storedSelectedPago = await AsyncStorage.getItem(
+        "@selected_pago"
+      );
+      if (storedSelectedPago)
+        setSelectedPaymentIdState(storedSelectedPago);
     })();
   }, []);
 
-  const setDireccion = async (d: string) => {
-    setDireccionState(d);
-    try {
-      await AsyncStorage.setItem("@direccion", d);
-    } catch (e) {
-      console.warn("Error guardando direccion", e);
+  // --- Helpers direcciones ---
+  const persistDirecciones = async (list: UserAddress[]) => {
+    setDirecciones(list);
+    await AsyncStorage.setItem("@direcciones", JSON.stringify(list));
+  };
+
+  const addDireccion = async (dir: UserAddress) => {
+    const nuevas = [...direcciones, dir];
+    await persistDirecciones(nuevas);
+
+    if (!selectedDireccionId) {
+      await setSelectedDireccion(dir.id);
     }
   };
-  const persistPagos = async (newPagos: PaymentMethod[]) => {
-    setPagos(newPagos);
-    try {
-      await AsyncStorage.setItem("@pagos", JSON.stringify(newPagos));
-    } catch (e) {
-      console.warn("Error guardando pagos", e);
-    }
+
+  const setSelectedDireccion = async (id: string | null) => {
+    setSelectedDireccionIdState(id);
+    if (id)
+      await AsyncStorage.setItem("@selected_direccion", id);
+    else await AsyncStorage.removeItem("@selected_direccion");
+  };
+
+  // --- Pagos ---
+  const persistPagos = async (list: PaymentMethod[]) => {
+    setPagos(list);
+    await AsyncStorage.setItem("@pagos", JSON.stringify(list));
   };
 
   const addPago = async (pago: PaymentMethod) => {
     const nuevos = [...pagos, pago];
     await persistPagos(nuevos);
-    // Si no hay seleccionado, seleccionamos el nuevo por defecto
     if (!selectedPaymentId) {
       await setSelectedPayment(pago.id);
     }
@@ -90,20 +124,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const setSelectedPayment = async (id: string | null) => {
     setSelectedPaymentIdState(id);
-    try {
-      if (id) await AsyncStorage.setItem("@selected_pago", id);
-      else await AsyncStorage.removeItem("@selected_pago");
-    } catch (e) {
-      console.warn("Error guardando selected payment", e);
-    }
+    if (id) await AsyncStorage.setItem("@selected_pago", id);
+    else await AsyncStorage.removeItem("@selected_pago");
   };
 
+  // --- Carrito ---
   const addToCart = (item: CartItem) => {
     setCart((prev) => {
       const idx = prev.findIndex((i) => i.id === item.id);
       if (idx > -1) {
         const copy = [...prev];
-        copy[idx] = { ...copy[idx], quantity: (copy[idx].quantity || 1) + 1 };
+        copy[idx] = {
+          ...copy[idx],
+          quantity: (copy[idx].quantity || 1) + 1,
+        };
         return copy;
       }
       return [...prev, { ...item, quantity: item.quantity ?? 1 }];
@@ -121,8 +155,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         addToCart,
         removeFromCart,
         clearCart,
-        direccion,
-        setDireccion,
+
+        direcciones,
+        addDireccion,
+        selectedDireccionId,
+        setSelectedDireccion,
+
         pagos,
         addPago,
         selectedPaymentId,

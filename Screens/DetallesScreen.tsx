@@ -34,12 +34,6 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
         {/* Resumen del pedido */}
         <Text style={styles.label}>Resumen del carrito</Text>
         <View style={styles.card}>
-          {/* <Ionicons
-            name="cart-outline"
-            size={32}
-            color="#ff6b00"
-            style={styles.icon}
-          /> */}
           <View style={{ flex: 1 }}>
             {cart.map((item) => (
               <Text key={item.id} style={styles.infoText}>
