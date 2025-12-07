@@ -11,8 +11,9 @@ import DireccionCard from "../Components/Location";
 import PagoCard from "../Components/PagoCard";
 
 const DetallesPedidoScreen = ({ navigation }: any) => {
-  const { cart } = useCart();
+  const { cart, selectedDireccionId, selectedPaymentId } = useCart();
   const [pagoEditable, setPagoEditable] = useState(false);
+  const [error, setError] = useState("");
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * (item.quantity || 1),
@@ -51,8 +52,22 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
             <Text style={styles.changeBtn}>Modificar</Text>
           </TouchableOpacity>
         </View>
+        {error !== "" && (
+          <Text style={{ color: 'red', textAlign: 'center', marginBottom: 10 }}>{error}</Text>
+        )}
         <TouchableOpacity
-        onPress={() => navigation.navigate("Order")}
+          onPress={() => {
+            if (!selectedDireccionId) {
+              setError("Debes seleccionar una dirección de entrega.");
+              return;
+            }
+            if (!selectedPaymentId) {
+              setError("Debes seleccionar un método de pago.");
+              return;
+            }
+            setError("");
+            navigation.navigate("Order");
+          }}
           style={styles.confirmbtn}
         >
           <Text style={styles.confirmText}>Confirmar orden</Text>
