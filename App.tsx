@@ -1,5 +1,5 @@
 import { NavigationContainer } from "@react-navigation/native";
-import StackN from "./Navigation/StackN";
+import StackN_login from "./Navigation/StackN_login";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useAuthStore } from "./Utils/store_auth";
@@ -35,7 +35,7 @@ export default function App() {
     <CartProvider>
       <NavigationContainer>
         <StatusBar style="auto" />
-        {user ? <TabNavigation /> : <StackN />}
+        {user ? <TabNavigation /> : <StackN_login />}
       </NavigationContainer>
     </CartProvider>
   );

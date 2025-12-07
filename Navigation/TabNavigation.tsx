@@ -8,6 +8,7 @@ import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from '@expo/vector-icons/Feather';
+import StackN_carrito from "./StackN_carrito";
 
 const Tab = createBottomTabNavigator();
 
@@ -47,7 +48,7 @@ const TabNavigation = () => {
       />
       <Tab.Screen
         name="Carrito"
-        component={CarritoScreen}
+        component={StackN_carrito}
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) =>

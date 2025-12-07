@@ -1,22 +1,35 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, processColor } from "react-native";
 import React from "react";
+import { useCart } from "./CartContext";
 
 const SquareCardHome = ({
   name,
   price,
   img,
-  onPress,
+  size,
 }: {
   name: string;
   price: number;
   img: any;
-  onPress?: () => void;
+  size: string;
 }) => {
+  const { addToCart } = useCart();
   return (
     <View style={style.squarecard}>
-      <TouchableOpacity onPress={onPress}>
+      <TouchableOpacity
+        onPress={() =>
+          addToCart({
+            id: `${name}_id`,
+            name: `${name}`,
+            price: price,
+            image: img,
+            size: `${size}`,
+          })
+        }
+      >
         <Image style={style.pizza} source={img} />
         <Text style={style.name}>{name}</Text>
+        <Text style={style.size}>{size}</Text>
         <Text style={style.price}>${price}</Text>
       </TouchableOpacity>
     </View>
@@ -42,6 +55,12 @@ const style = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     color: "rgba(0, 0, 0, 1)",
+  },
+  size: {
+    color: "#999",
+    fontSize: 14,
+    fontWeight: 700,
+    textAlign: "center",
   },
   price: {
     textAlign: "center",

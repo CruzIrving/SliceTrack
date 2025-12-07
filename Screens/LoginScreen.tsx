@@ -8,8 +8,10 @@ import {
 } from "react-native";
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
+
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParams } from "../Navigation/StackN";
+import { RootStackParams } from "../Navigation/StackN_login";
+
 import { useState } from "react";
 
 import { signInWithEmailAndPassword } from "firebase/auth";

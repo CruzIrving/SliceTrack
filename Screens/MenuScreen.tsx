@@ -44,6 +44,7 @@ const MenuScreen = () => {
                   name: "Pizza Pollo Búfalo",
                   price: 120,
                   image: require("../assets/Images/Pizza1.png"),
+                  size: "Pizza Chica"
                 })
               }
             />
@@ -59,6 +60,7 @@ const MenuScreen = () => {
                   name: "Pizza Pollo Chipotle",
                   price: 140,
                   image: require("../assets/Images/pizza2.png"),
+                  size: "Pizza Mediana" 
                 })
               }
             />
@@ -74,6 +76,7 @@ const MenuScreen = () => {
                   name: "pizza_peperonni",
                   price: 120,
                   image: require("../assets/Images/pizza_peperonni.png"),
+                  size: "Pizza Chica"
                 })
               }
             />
@@ -89,6 +92,7 @@ const MenuScreen = () => {
                   name: "Pizza_margherita",
                   price: 250,
                   image: require("../assets/Images/Pizza_margherita_sushi.png"),
+                  size: "Pizza Mediana"
                 })
               }
             />
@@ -108,6 +112,7 @@ const MenuScreen = () => {
                   name: "Coca-Cola 500ml",
                   price: 40,
                   image: require("../assets/Images/CocaCola600ml.png"),
+                  size: "500ml",
                 })
               }
             />
@@ -122,6 +127,7 @@ const MenuScreen = () => {
                   name: "Coca-Cola 2L",
                   price: 80,
                   image: require("../assets/Images/cocacola_2L.png"),
+                  size: "2L",
                 })
               }
             />
@@ -137,6 +143,7 @@ const MenuScreen = () => {
                   name: "Sprite 500ml",
                   price: 40,
                   image: require("../assets/Images/sprite_600ml.png"),
+                  size: "500ml",
                 })
               }
             />
@@ -152,6 +159,7 @@ const MenuScreen = () => {
                   name: "Fanta de lata",
                   price: 40,
                   image: require("../assets/Images/fanta_lata.png"),
+                  size: "500ml",
                 })
               }
             />
@@ -171,6 +179,7 @@ const MenuScreen = () => {
                   name: "Combo Familiar",
                   price: 400,
                   image: require("../assets/Images/ComboFamiliar.png"),
+                  size: "Familiar",
                 })
               }
             />
@@ -186,6 +195,7 @@ const MenuScreen = () => {
                   name: "Combo Brother",
                   price: 1000,
                   image: require("../assets/Images/combo_brother.png"),
+                  size: "Familiar",
                 })
               }
             />
@@ -201,6 +211,7 @@ const MenuScreen = () => {
                   name: "Combo chiken",
                   price: 1000,
                   image: require("../assets/Images/pack_pollo.png"),
+                  size: "Familiar",
                 })
               }
             />
@@ -216,6 +227,7 @@ const MenuScreen = () => {
                   name: "Combo pastes",
                   price: 200,
                   image: require("../assets/Images/pack_pastes.png"),
+                  size: "Familiar 10 pastes",
                 })
               }
             />
@@ -233,6 +245,7 @@ const MenuScreen = () => {
                   name: "Brownie",
                   price: 50,
                   image: require("../assets/Images/Brownie.png"),
+                  size: "Porcion",
                 })
               }
             />
@@ -248,6 +261,7 @@ const MenuScreen = () => {
                   name: "pastel de queso",
                   price: 50,
                   image: require("../assets/Images/pastel_de_queso.png"),
+                  size: "Porcion",
                 })
               }
             />
@@ -263,6 +277,7 @@ const MenuScreen = () => {
                   name: "pastel de chocolate",
                   price: 50,
                   image: require("../assets/Images/pastel_de_cocolate.png"),
+                  size: "Porcion",
                 })
               }
             />
@@ -278,6 +293,7 @@ const MenuScreen = () => {
                   name: "Brownie",
                   price: 50,
                   image: require("../assets/Images/pastel_de_fresa.png"),
+                  size: "Porcion",
                 })
               }
             />

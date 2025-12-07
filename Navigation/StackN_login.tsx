@@ -13,7 +13,7 @@ export type RootStackParams = {
 
 const Stack = createStackNavigator<RootStackParams>();
 
-const StackN = () => {
+const StackN_login = () => {
 
   return (
     <Stack.Navigator>
@@ -31,4 +31,4 @@ const StackN = () => {
   );
 };
 
-export default StackN;
+export default StackN_login;

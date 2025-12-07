@@ -12,10 +12,8 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import SquareCardHome from "../Components/SquareCardHome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useCart } from "../Components/CartContext";
 
 const HomeScreen = () => {
-  const { addToCart } = useCart();
 
   return (
     <ScrollView style={style.container}>
@@ -102,28 +100,14 @@ const HomeScreen = () => {
           name="Pizza Pollo Búfalo"
           price={220}
           img={require("../assets/Images/Pizza1.png")}
-          onPress={() =>
-            addToCart({
-              id: "pizza-pollo-bufalo-1",
-              name: "Pizza Pollo Búfalo",
-              price: 220,
-              image: require("../assets/Images/Pizza1.png"),
-            })
-          }
+          size="Grande"
         />
 
         <SquareCardHome
           name="Pizza Pollo Chipotle"
-          price={120}
+          price={140}
           img={require("../assets/Images/pizza2.png")}
-          onPress={() =>
-            addToCart({
-              id: "pizza-pollo-chipotle-1",
-              name: "Pizza Pollo Chipotle",
-              price: 120,
-              image: require("../assets/Images/pizza2.png"),
-            })
-          }
+          size="Mediana"
         />
       </View>
 
@@ -134,30 +118,17 @@ const HomeScreen = () => {
           name="Pizza Pollo Búfalo"
           price={220}
           img={require("../assets/Images/Pizza1.png")}
-          onPress={() =>
-            addToCart({
-              id: "pizza-pollo-bufalo-2",
-              name: "Pizza Pollo Búfalo",
-              price: 220,
-              image: require("../assets/Images/Pizza1.png"),
-            })
-          }
+          size="Grande"
         />
 
         <SquareCardHome
           name="Pizza Pollo Chipotle"
-          price={120}
+          price={140}
           img={require("../assets/Images/pizza2.png")}
-          onPress={() =>
-            addToCart({
-              id: "pizza-pollo-chipotle-2",
-              name: "Pizza Pollo Chipotle",
-              price: 120,
-              image: require("../assets/Images/pizza2.png"),
-            })
-          }
+          size="Mediana"
         />
       </View>
+      <View style={{ height: 50, width: 50, }}></View>
     </ScrollView>
   );
 };
