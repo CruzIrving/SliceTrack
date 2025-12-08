@@ -116,7 +116,7 @@ const ProfileScreen = ({ navigation }: Props) => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => openWhatsApp(user.phone)}
+        onPress={() => openWhatsApp("7716849441")}
         style={style.options}
       >
         <Feather name="help-circle" size={32} color="orange" />
