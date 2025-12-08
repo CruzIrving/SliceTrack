@@ -1,5 +1,5 @@
 // PagoCard.tsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,10 @@ import { useCart, PaymentMethod } from "./CartContext";
 import uuid from "react-native-uuid";
 import { Picker } from "@react-native-picker/picker";
 
+interface Props {
+  onValidChange: (valid: boolean) => void;
+}
+
 const currentYear = new Date().getFullYear();
 const currentMonth = new Date().getMonth() + 1; // 1-12
 
@@ -29,10 +33,10 @@ const maskCard = (num: string) => {
   return "**** **** **** " + cleaned.slice(-4);
 };
 
-const PagoCard = () => {
+const PagoCard = ({ onValidChange }: Props) => {
   const { pagos, addPago, selectedPaymentId, setSelectedPayment } = useCart();
   const [modalVisible, setModalVisible] = useState(false);
-  const [showNewForm, setShowNewForm] = useState(pagos.length === 0); // si no hay pagos, mostramos form
+  const [showNewForm, setShowNewForm] = useState(pagos.length === 0);
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
   const [cvv, setCvv] = useState("");
@@ -46,11 +50,15 @@ const PagoCard = () => {
     [pagos, selectedPaymentId]
   );
 
-  // validaciones
+  // Avisar al padre si hay método de pago válido
+  useEffect(() => {
+    onValidChange(!!metodoActual);
+  }, [metodoActual]);
+
+  // Validaciones
   const onlyDigits = (s: string) => s.replace(/\D/g, "");
   const handleCardNumber = (text: string) => {
     const digits = onlyDigits(text).slice(0, 16);
-    // formateo con espacios opcional: XXXX XXXX XXXX XXXX
     const parts = digits.match(/.{1,4}/g);
     setCardNumber(parts ? parts.join(" ") : digits);
   };
@@ -60,11 +68,8 @@ const PagoCard = () => {
   };
 
   const expiryIsValid = () => {
-    const month = selMonth;
-    const year = selYear;
-    if (!month || !year) return false;
-    if (year > currentYear) return true;
-    if (year === currentYear && month >= currentMonth) return true;
+    if (selYear > currentYear) return true;
+    if (selYear === currentYear && selMonth >= currentMonth) return true;
     return false;
   };
 
@@ -87,14 +92,13 @@ const PagoCard = () => {
       cardHolder: cardHolder.trim(),
       expiry: `${selMonth.toString().padStart(2, "0")}/${selYear
         .toString()
-        .slice(-2)}`, // MM/YY
+        .slice(-2)}`,
       cvv,
     };
 
     await addPago(newPago);
-    // seleccionarlo
     await setSelectedPayment(newPago.id);
-    // reset form
+
     setCardNumber("");
     setCardHolder("");
     setCvv("");
@@ -122,9 +126,7 @@ const PagoCard = () => {
           />
           <Text style={styles.infoText}>
             {metodoActual
-              ? `**** **** **** ${metodoActual.cardNumber.slice(-4)} • ${
-                  metodoActual.cardHolder
-                }`
+              ? `**** **** **** ${metodoActual.cardNumber.slice(-4)} • ${metodoActual.cardHolder}`
               : "No hay método de pago"}
           </Text>
           <TouchableOpacity
@@ -140,6 +142,7 @@ const PagoCard = () => {
           </TouchableOpacity>
         </View>
 
+        {/* MODAL */}
         <Modal visible={modalVisible} animationType="slide" transparent={true}>
           <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
@@ -160,20 +163,15 @@ const PagoCard = () => {
                             {item.cardHolder} • {item.expiry}
                           </Text>
                         </View>
-                        <View
-                          style={{ flexDirection: "row", alignItems: "center" }}
+                        <TouchableOpacity
+                          onPress={() => handleSelect(item.id)}
+                          style={styles.selectBtn}
                         >
-                          <TouchableOpacity
-                            onPress={() => handleSelect(item.id)}
-                            style={styles.selectBtn}
-                          >
-                            <Text style={{ color: "#fff" }}>Seleccionar</Text>
-                          </TouchableOpacity>
-                        </View>
+                          <Text style={{ color: "#fff" }}>Seleccionar</Text>
+                        </TouchableOpacity>
                       </View>
                     )}
                   />
-
                   <TouchableOpacity
                     onPress={() => setShowNewForm(true)}
                     style={styles.addNewBtn}
@@ -190,22 +188,18 @@ const PagoCard = () => {
                   </TouchableOpacity>
                 </>
               ) : (
-                // formulario para nuevo método
                 <ScrollView>
                   <Text style={styles.modalSubtitle}>Agregar tarjeta</Text>
-
                   <TextInput
                     placeholder="Número de tarjeta"
                     value={cardNumber}
                     onChangeText={handleCardNumber}
                     style={styles.input}
                     keyboardType="number-pad"
-                    maxLength={19} // 16 digits + 3 spaces
+                    maxLength={19}
                   />
                   <Text style={styles.hint}>
-                    {isCardNumberValid
-                      ? ""
-                      : "El número debe ser de 16 dígitos"}
+                    {isCardNumberValid ? "" : "El número debe ser de 16 dígitos"}
                   </Text>
 
                   <TextInput
@@ -215,9 +209,7 @@ const PagoCard = () => {
                     style={styles.input}
                   />
                   <Text style={styles.hint}>
-                    {isHolderValid
-                      ? ""
-                      : "Ingresa el nombre tal como aparece en la tarjeta"}
+                    {isHolderValid ? "" : "Ingresa el nombre tal como aparece en la tarjeta"}
                   </Text>
 
                   <View style={styles.row}>
@@ -238,7 +230,6 @@ const PagoCard = () => {
                         </Picker>
                       </View>
                     </View>
-
                     <View style={{ flex: 1, marginLeft: 10 }}>
                       <Text style={styles.pickerLabel}>Año</Text>
                       <View style={styles.pickerWrap}>
@@ -247,20 +238,14 @@ const PagoCard = () => {
                           onValueChange={(v) => setSelYear(Number(v))}
                         >
                           {years.map((y) => (
-                            <Picker.Item
-                              key={y}
-                              label={y.toString()}
-                              value={y}
-                            />
+                            <Picker.Item key={y} label={y.toString()} value={y} />
                           ))}
                         </Picker>
                       </View>
                     </View>
                   </View>
                   <Text style={styles.hint}>
-                    {expiryIsValid()
-                      ? ""
-                      : "La fecha debe ser igual o posterior al mes actual"}
+                    {expiryIsValid() ? "" : "La fecha debe ser igual o posterior al mes actual"}
                   </Text>
 
                   <TextInput
@@ -272,22 +257,14 @@ const PagoCard = () => {
                     maxLength={3}
                     secureTextEntry
                   />
-                  <Text style={styles.hint}>
-                    {isCvvValid ? "" : "CVV = 3 dígitos"}
-                  </Text>
+                  <Text style={styles.hint}>{isCvvValid ? "" : "CVV = 3 dígitos"}</Text>
 
                   <TouchableOpacity
                     onPress={handleAdd}
                     style={[styles.addBtn, { opacity: canAdd ? 1 : 0.5 }]}
                     disabled={!canAdd}
                   >
-                    <Text
-                      style={{
-                        color: "#fff",
-                        fontWeight: "700",
-                        textAlign: "center",
-                      }}
-                    >
+                    <Text style={{ color: "#fff", fontWeight: "700", textAlign: "center" }}>
                       Agregar método
                     </Text>
                   </TouchableOpacity>
@@ -299,13 +276,7 @@ const PagoCard = () => {
                     }}
                     style={{ marginTop: 10 }}
                   >
-                    <Text
-                      style={{
-                        color: "#ff6b00",
-                        fontWeight: "700",
-                        textAlign: "center",
-                      }}
-                    >
+                    <Text style={{ color: "#ff6b00", fontWeight: "700", textAlign: "center" }}>
                       Cancelar
                     </Text>
                   </TouchableOpacity>
@@ -318,13 +289,7 @@ const PagoCard = () => {
                   onPress={() => setModalVisible(false)}
                   style={{ marginTop: 10 }}
                 >
-                  <Text
-                    style={{
-                      color: "#ff6b00",
-                      fontWeight: "700",
-                      textAlign: "center",
-                    }}
-                  >
+                  <Text style={{ color: "#ff6b00", fontWeight: "700", textAlign: "center" }}>
                     Cerrar
                   </Text>
                 </TouchableOpacity>

@@ -12,8 +12,12 @@ import PagoCard from "../../Components/PagoCard";
 
 const DetallesPedidoScreen = ({ navigation }: any) => {
   const { cart, selectedDireccionId, selectedPaymentId } = useCart();
-  const [pagoEditable, setPagoEditable] = useState(false);
   const [error, setError] = useState("");
+
+  const [locationValid, setLocationValid] = useState(false);
+  const [paymentValid, setPaymentValid] = useState(false);
+
+  const isFormValid = locationValid && paymentValid;
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * (item.quantity || 1),
@@ -27,10 +31,10 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
       <Text style={styles.title}>Detalles del pedido</Text>
       <ScrollView style={styles.container}>
         {/* Dirección */}
-        <DireccionCard />
+        <DireccionCard onValidChange={setLocationValid}/>
 
         {/* Método de pago */}
-        <PagoCard />
+        <PagoCard onValidChange={setPaymentValid} />
 
         {/* Resumen del pedido */}
         <Text style={styles.label}>Resumen del carrito</Text>
@@ -53,22 +57,16 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
         {error !== "" && (
-          <Text style={{ color: 'red', textAlign: 'center', marginBottom: 10 }}>{error}</Text>
+          <Text style={{ color: "red", textAlign: "center", marginBottom: 10 }}>
+            {error}
+          </Text>
         )}
         <TouchableOpacity
           onPress={() => {
-            if (!selectedDireccionId) {
-              setError("Debes seleccionar una dirección de entrega.");
-              return;
-            }
-            if (!selectedPaymentId) {
-              setError("Debes seleccionar un método de pago.");
-              return;
-            }
-            setError("");
             navigation.navigate("Order");
           }}
-          style={styles.confirmbtn}
+          disabled={!isFormValid}
+          style={[styles.confirmbtn, {backgroundColor: isFormValid ? "#ff6b00" : "#999" ,}]}
         >
           <Text style={styles.confirmText}>Confirmar orden</Text>
         </TouchableOpacity>
@@ -112,7 +110,6 @@ const styles = StyleSheet.create({
 
   confirmbtn: {
     padding: 20,
-    backgroundColor: "#ff6b00",
     width: "100%",
     marginTop: 10,
   },

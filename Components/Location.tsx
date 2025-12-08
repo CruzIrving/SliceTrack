@@ -1,5 +1,5 @@
 // Location.tsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,11 @@ import MapView, { Marker, Region } from "react-native-maps";
 import { useCart } from "./CartContext";
 import { Ionicons } from "@expo/vector-icons";
 
-const DireccionCard = () => {
+interface Props {
+  onValidChange: (valid: boolean) => void;
+}
+
+const DireccionCard = ({ onValidChange }: Props) => {
   const {
     direcciones,
     addDireccion,
@@ -31,17 +35,17 @@ const DireccionCard = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [label, setLabel] = useState("");
-  const [markerCoord, setMarkerCoord] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  const [markerCoord, setMarkerCoord] = useState<{ latitude: number; longitude: number } | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
 
   const tempAddress = useRef<string>("");
 
-  const selectedAddress = direcciones.find(
-    (d) => d.id === selectedDireccionId
-  );
+  const selectedAddress = direcciones.find((d) => d.id === selectedDireccionId);
+
+  // --- Avisar al padre si hay dirección válida ---
+  useEffect(() => {
+    onValidChange(!!selectedDireccionId);
+  }, [selectedDireccionId]);
 
   // --- Abrir lista ---
   const abrirSelector = () => {
@@ -55,8 +59,7 @@ const DireccionCard = () => {
     setError(null);
 
     try {
-      const { status } =
-        await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setError("Permiso de ubicación denegado.");
         setLoading(false);
@@ -70,11 +73,7 @@ const DireccionCard = () => {
       };
 
       setMarkerCoord(coords);
-      setRegion({
-        ...coords,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
+      setRegion({ ...coords, latitudeDelta: 0.01, longitudeDelta: 0.01 });
 
       setShowMap(true);
     } catch (e) {
@@ -89,14 +88,8 @@ const DireccionCard = () => {
     if (!markerCoord) return;
 
     try {
-      const [placemark] =
-        await Location.reverseGeocodeAsync(markerCoord);
-
-      tempAddress.current = `${placemark.name ?? ""} ${
-        placemark.street ?? ""
-      }, ${placemark.city ?? ""}, ${placemark.region ?? ""}, ${
-        placemark.postalCode ?? ""
-      }`;
+      const [placemark] = await Location.reverseGeocodeAsync(markerCoord);
+      tempAddress.current = `${placemark.name ?? ""} ${placemark.street ?? ""}, ${placemark.city ?? ""}, ${placemark.region ?? ""}, ${placemark.postalCode ?? ""}`;
 
       setShowMap(false);
       setShowForm(true);
@@ -132,23 +125,14 @@ const DireccionCard = () => {
 
       <View style={styles.card}>
         <View style={styles.row}>
-          <Ionicons
-            name="location-outline"
-            size={32}
-            color="#ff6b00"
-            style={styles.icon}
-          />
-
+          <Ionicons name="location-outline" size={32} color="#ff6b00" style={styles.icon} />
           <Text style={styles.infoText}>
             {selectedAddress
               ? `${selectedAddress.label}: ${selectedAddress.fullAddress}`
               : "No hay dirección seleccionada"}
           </Text>
-
           <TouchableOpacity onPress={abrirSelector}>
-            <Text style={styles.changeBtn}>
-              {direcciones.length > 0 ? "Cambiar" : "Agregar"}
-            </Text>
+            <Text style={styles.changeBtn}>{direcciones.length > 0 ? "Cambiar" : "Agregar"}</Text>
           </TouchableOpacity>
         </View>
 
@@ -158,38 +142,24 @@ const DireccionCard = () => {
       {/* MODAL - lista de direcciones */}
       <Modal visible={showList} animationType="slide">
         <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>
-            Tus direcciones
-          </Text>
+          <Text style={styles.modalTitle}>Tus direcciones</Text>
 
           <FlatList
             data={direcciones}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={[
-                  styles.addressItem,
-                  item.id === selectedDireccionId &&
-                    styles.selectedItem,
-                ]}
+                style={[styles.addressItem, item.id === selectedDireccionId && styles.selectedItem]}
                 onPress={async () => {
                   await setSelectedDireccion(item.id);
                   setShowList(false);
                 }}
               >
-                <Text style={styles.addressLabel}>
-                  {item.label}
-                </Text>
-                <Text style={styles.addressText}>
-                  {item.fullAddress}
-                </Text>
+                <Text style={styles.addressLabel}>{item.label}</Text>
+                <Text style={styles.addressText}>{item.fullAddress}</Text>
               </TouchableOpacity>
             )}
-            ListEmptyComponent={
-              <Text style={{ textAlign: "center" }}>
-                No hay direcciones guardadas
-              </Text>
-            }
+            ListEmptyComponent={<Text style={{ textAlign: "center" }}>No hay direcciones guardadas</Text>}
           />
 
           <TouchableOpacity
@@ -199,18 +169,11 @@ const DireccionCard = () => {
               abrirMapa();
             }}
           >
-            <Text style={styles.addNewText}>
-              + Agregar nueva
-            </Text>
+            <Text style={styles.addNewText}>+ Agregar nueva</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.cancelBtn}
-            onPress={() => setShowList(false)}
-          >
-            <Text style={styles.cancelText}>
-              Cerrar
-            </Text>
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowList(false)}>
+            <Text style={styles.cancelText}>Cerrar</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -222,39 +185,17 @@ const DireccionCard = () => {
             <ActivityIndicator color="#ff6b00" />
           ) : (
             <>
-              <MapView
-                style={styles.map}
-                region={region}
-                onPress={(e) =>
-                  setMarkerCoord(e.nativeEvent.coordinate)
-                }
-              >
-                <Marker
-                  draggable
-                  coordinate={markerCoord}
-                  onDragEnd={(e) =>
-                    setMarkerCoord(e.nativeEvent.coordinate)
-                  }
-                />
+              <MapView style={styles.map} region={region} onPress={(e) => setMarkerCoord(e.nativeEvent.coordinate)}>
+                <Marker draggable coordinate={markerCoord} onDragEnd={(e) => setMarkerCoord(e.nativeEvent.coordinate)} />
               </MapView>
 
               <View style={styles.mapFooter}>
-                <TouchableOpacity
-                  onPress={() => setShowMap(false)}
-                  style={styles.cancelBtn}
-                >
-                  <Text style={styles.cancelText}>
-                    Cancelar
-                  </Text>
+                <TouchableOpacity onPress={() => setShowMap(false)} style={styles.cancelBtn}>
+                  <Text style={styles.cancelText}>Cancelar</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={confirmarPin}
-                  style={styles.confirmBtn}
-                >
-                  <Text style={styles.confirmText}>
-                    Confirmar
-                  </Text>
+                <TouchableOpacity onPress={confirmarPin} style={styles.confirmBtn}>
+                  <Text style={styles.confirmText}>Confirmar</Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -266,36 +207,18 @@ const DireccionCard = () => {
       <Modal visible={showForm} transparent>
         <View style={styles.formOverlay}>
           <View style={styles.formCard}>
-            <Text style={styles.modalTitle}>
-              Guarda tu dirección
-            </Text>
+            <Text style={styles.modalTitle}>Guarda tu dirección</Text>
 
-            <TextInput
-              placeholder="Nombre (Casa, Trabajo...)"
-              style={styles.input}
-              value={label}
-              onChangeText={setLabel}
-            />
+            <TextInput placeholder="Nombre (Casa, Trabajo...)" style={styles.input} value={label} onChangeText={setLabel} />
 
-            <Text style={styles.previewText}>
-              {tempAddress.current}
-            </Text>
+            <Text style={styles.previewText}>{tempAddress.current}</Text>
 
-            <TouchableOpacity
-              style={styles.confirmBtn}
-              onPress={guardarDireccion}
-            >
-              <Text style={styles.confirmText}>
-                Guardar
-              </Text>
+            <TouchableOpacity style={styles.confirmBtn} onPress={guardarDireccion}>
+              <Text style={styles.confirmText}>Guardar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => setShowForm(false)}
-            >
-              <Text style={styles.cancelText}>
-                Cancelar
-              </Text>
+            <TouchableOpacity onPress={() => setShowForm(false)}>
+              <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -305,103 +228,30 @@ const DireccionCard = () => {
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
-    elevation: 3,
-  },
-  label: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#000",
-    marginBottom: 5,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  card: { backgroundColor: "#fff", padding: 15, borderRadius: 8, marginBottom: 15, elevation: 3 },
+  label: { fontSize: 18, fontWeight: "900", color: "#000", marginBottom: 5 },
+  row: { flexDirection: "row", alignItems: "center" },
   icon: { marginRight: 10 },
   infoText: { flex: 1, color: "#000", fontSize: 16 },
-
   changeBtn: { color: "#ff6b00", fontWeight: "bold" },
   error: { color: "red", marginTop: 5 },
-
   modalContainer: { flex: 1, padding: 20 },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    marginBottom: 10,
-    color: "#000",
-  },
-
-  addressItem: {
-    backgroundColor: "#f5f5f5",
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
+  modalTitle: { fontSize: 20, fontWeight: "900", marginBottom: 10, color: "#000" },
+  addressItem: { backgroundColor: "#f5f5f5", padding: 15, borderRadius: 8, marginBottom: 10 },
   selectedItem: { borderWidth: 2, borderColor: "#ff6b00" },
   addressLabel: { fontWeight: "bold", color: "#000" },
   addressText: { color: "#333" },
-
-  addNewBtn: {
-    marginTop: 10,
-    padding: 15,
-    alignItems: "center",
-  },
-  addNewText: {
-    color: "#ff6b00",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-
+  addNewBtn: { marginTop: 10, padding: 15, alignItems: "center" },
+  addNewText: { color: "#ff6b00", fontWeight: "bold", fontSize: 16 },
   map: { flex: 1 },
-
-  mapFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 15,
-  },
-
-  cancelBtn: {
-    alignItems: "center",
-    padding: 12,
-  },
+  mapFooter: { flexDirection: "row", justifyContent: "space-between", padding: 15 },
+  cancelBtn: { alignItems: "center", padding: 12 },
   cancelText: { color: "#000", fontWeight: "bold" },
-
-  confirmBtn: {
-    padding: 12,
-    backgroundColor: "#ff6b00",
-    borderRadius: 8,
-  },
-  confirmText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-
-  formOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  formCard: {
-    backgroundColor: "#fff",
-    padding: 20,
-    width: "90%",
-    borderRadius: 10,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-
+  confirmBtn: { padding: 12, backgroundColor: "#ff6b00", borderRadius: 8 },
+  confirmText: { color: "#fff", fontWeight: "bold" },
+  formOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", alignItems: "center" },
+  formCard: { backgroundColor: "#fff", padding: 20, width: "90%", borderRadius: 10 },
+  input: { borderWidth: 1, borderColor: "#ddd", padding: 10, borderRadius: 8, marginBottom: 10 },
   previewText: { color: "#000", marginBottom: 10 },
 });
 
