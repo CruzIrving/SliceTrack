@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -14,8 +14,96 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useUser } from "../Components/UserContext";
 
+const productos = {
+  pizzas: [
+    {
+      name: "Pizza Pollo Búfalo",
+      price: 220,
+      img: require("../assets/Images/Pizza1.png"),
+      size: "Grande",
+    },
+    {
+      name: "Pizza Pollo Chipotle",
+      price: 140,
+      img: require("../assets/Images/pizza2.png"),
+      size: "Mediana",
+    },
+    {
+      name: "Pizza Peperonni",
+      price: 120,
+      img: require("../assets/Images/pizza_peperonni.png"),
+      size: "Chica",
+    },
+    {
+      name: "Pizza Margherita",
+      price: 250,
+      img: require("../assets/Images/Pizza_margherita_sushi.png"),
+      size: "Mediana",
+    },
+  ],
+  bebidas: [
+    {
+      name: "Coca-Cola 500ml",
+      price: 40,
+      img: require("../assets/Images/CocaCola600ml.png"),
+      size: "500ml",
+    },
+    {
+      name: "Coca-Cola 2L",
+      price: 80,
+      img: require("../assets/Images/cocacola_2L.png"),
+      size: "2L",
+    },
+    {
+      name: "Sprite 500ml",
+      price: 40,
+      img: require("../assets/Images/sprite_600ml.png"),
+      size: "500ml",
+    },
+    {
+      name: "Fanta 500ml lata",
+      price: 40,
+      img: require("../assets/Images/fanta_lata.png"),
+      size: "500ml",
+    },
+  ],
+  combos: [
+    {
+      name: "Combo Familiar",
+      price: 400,
+      img: require("../assets/Images/ComboFamiliar.png"),
+      size: "Familiar",
+    },
+    {
+      name: "Combo Brother",
+      price: 1000,
+      img: require("../assets/Images/combo_brother.png"),
+      size: "Familiar",
+    },
+    {
+      name: "Combo chiken",
+      price: 1000,
+      img: require("../assets/Images/pack_pollo.png"),
+      size: "Familiar",
+    },
+    {
+      name: "Combo pastes",
+      price: 200,
+      img: require("../assets/Images/pack_pastes.png"),
+      size: "Familiar 10 pastes",
+    },
+  ],
+};
+
+const allProducts = [
+  ...productos.pizzas,
+  ...productos.bebidas,
+  ...productos.combos,
+];
+
 const HomeScreen = () => {
   const { user } = useUser();
+  const [categoria, setCategoria] = useState<'pizzas' | 'bebidas' | 'combos'>('pizzas');
 
   return (
     <ScrollView style={style.container}>
@@ -66,32 +154,32 @@ const HomeScreen = () => {
       </View>
 
       <View style={style.buttons}>
-        <TouchableOpacity style={style.btn}>
+        <TouchableOpacity style={style.btn} onPress={() => setCategoria('pizzas')}>
           <FontAwesome5
             name="pizza-slice"
             size={20}
-            color="orange"
+            color={categoria === 'pizzas' ? "#ff6b00" : "orange"}
             style={style.iconbtn}
           />
-          <Text style={{ fontSize: 16 }}> Pizzas</Text>
+          <Text style={{ fontSize: 16, color: categoria === 'pizzas' ? "#ff6b00" : undefined }}> Pizzas</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={style.btn}>
+        <TouchableOpacity style={style.btn} onPress={() => setCategoria('bebidas')}>
           <FontAwesome6
             name="glass-water"
             size={20}
-            color="orange"
+            color={categoria === 'bebidas' ? "#ff6b00" : "orange"}
             style={style.iconbtn}
           />
-          <Text style={{ fontSize: 16 }}> Bebidas</Text>
+          <Text style={{ fontSize: 16, color: categoria === 'bebidas' ? "#ff6b00" : undefined }}> Bebidas</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={style.btn}>
+        <TouchableOpacity style={style.btn} onPress={() => setCategoria('combos')}>
           <Ionicons
             name="fast-food-outline"
             size={20}
-            color="orange"
+            color={categoria === 'combos' ? "#ff6b00" : "orange"}
             style={style.iconbtn}
           />
-          <Text style={{ fontSize: 16 }}> Combos</Text>
+          <Text style={{ fontSize: 16, color: categoria === 'combos' ? "#ff6b00" : undefined }}> Combos</Text>
         </TouchableOpacity>
       </View>
 
@@ -99,40 +187,30 @@ const HomeScreen = () => {
         <Text style={{ color: "#ff6b00" }}>Nueva:</Text> Pizza Bombina!
       </Text>
 
-      <Text style={style.sectionTitle}>Pizzas populares</Text>
-
+      <Text style={style.sectionTitle}>
+        {categoria === 'pizzas' ? 'Pizzas' : categoria === 'bebidas' ? 'Bebidas' : 'Combos'}
+      </Text>
       <View style={style.row}>
-        <SquareCardHome
-          name="Pizza Pollo Búfalo"
-          price={220}
-          img={require("../assets/Images/Pizza1.png")}
-          size="Grande"
-        />
-
-        <SquareCardHome
-          name="Pizza Pollo Chipotle"
-          price={140}
-          img={require("../assets/Images/pizza2.png")}
-          size="Mediana"
-        />
+        {productos[categoria].slice(0, 2).map((item, idx) => (
+          <SquareCardHome
+            key={item.name + idx}
+            name={item.name}
+            price={item.price}
+            img={item.img}
+            size={item.size}
+          />
+        ))}
       </View>
-
-      <Text style={style.sectionTitle}>Pizzas Especiales</Text>
-
       <View style={style.row}>
-        <SquareCardHome
-          name="Pizza Pollo Búfalo"
-          price={220}
-          img={require("../assets/Images/Pizza1.png")}
-          size="Grande"
-        />
-
-        <SquareCardHome
-          name="Pizza Pollo Chipotle"
-          price={140}
-          img={require("../assets/Images/pizza2.png")}
-          size="Mediana"
-        />
+        {productos[categoria].slice(2, 4).map((item, idx) => (
+          <SquareCardHome
+            key={item.name + idx}
+            name={item.name}
+            price={item.price}
+            img={item.img}
+            size={item.size}
+          />
+        ))}
       </View>
       <View style={{ height: 50, width: 50 }} />
     </ScrollView>
