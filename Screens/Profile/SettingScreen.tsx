@@ -85,7 +85,7 @@ const SettingScreen = () => {
     <ScrollView contentContainerStyle={{ alignItems: "center", padding: 20 }}>
       <TouchableOpacity onPress={pickImage}>
         <Image
-          source={image ? { uri: image } : require("../../assets/Images/image 15.png")}
+          source={image ? { uri: image } : require("../../assets/Images/user.png")}
           style={styles.img}
         />
         <Text style={styles.changePhoto}>Cambiar foto</Text>
