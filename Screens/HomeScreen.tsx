@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { TextInput as RNTextInput } from "react-native";
 import {
   View,
   Text,
@@ -104,6 +105,8 @@ const allProducts = [
 const HomeScreen = () => {
   const { user } = useUser();
   const [categoria, setCategoria] = useState<'pizzas' | 'bebidas' | 'combos'>('pizzas');
+  const [search, setSearch] = useState("");
+  const searchInputRef = useRef<RNTextInput>(null);
 
   return (
     <ScrollView style={style.container}>
@@ -124,19 +127,29 @@ const HomeScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={style.inputsearch}>
+      <TouchableOpacity
+        activeOpacity={1}
+        style={style.inputsearch}
+        onPress={() => searchInputRef.current && searchInputRef.current.focus()}
+      >
         <View style={{ opacity: 0.5 }}>
           <FontAwesome6 name="magnifying-glass" size={28} color="gray" />
         </View>
-
         <TextInput
+          ref={searchInputRef}
           style={style.searchtext}
           placeholder="¿Qué se te antoja hoy?"
+          value={search}
+          onChangeText={setSearch}
+          returnKeyType="search"
         />
-        <TouchableOpacity style={{ marginLeft: "auto", marginRight: 10 }}>
-          <Text style={{ fontSize: 20, color: "#ff6b00" }}>Buscar</Text>
+        <TouchableOpacity
+          style={{ marginLeft: "auto", marginRight: 10 }}
+          onPress={() => setSearch("")}
+        >
+          <Text style={{ fontSize: 20, color: "#ff6b00" }}>Limpiar</Text>
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
       <View style={style.promo}>
         <View style={style.promotext}>
@@ -190,28 +203,41 @@ const HomeScreen = () => {
       <Text style={style.sectionTitle}>
         {categoria === 'pizzas' ? 'Pizzas' : categoria === 'bebidas' ? 'Bebidas' : 'Combos'}
       </Text>
-      <View style={style.row}>
-        {productos[categoria].slice(0, 2).map((item, idx) => (
-          <SquareCardHome
-            key={item.name + idx}
-            name={item.name}
-            price={item.price}
-            img={item.img}
-            size={item.size}
-          />
-        ))}
-      </View>
-      <View style={style.row}>
-        {productos[categoria].slice(2, 4).map((item, idx) => (
-          <SquareCardHome
-            key={item.name + idx}
-            name={item.name}
-            price={item.price}
-            img={item.img}
-            size={item.size}
-          />
-        ))}
-      </View>
+      {(() => {
+        // Filtrar productos por búsqueda
+        const filtered = productos[categoria].filter(item =>
+          item.name.toLowerCase().includes(search.toLowerCase())
+        );
+        return [
+          <View style={style.row} key="row1">
+            {filtered.slice(0, 2).map((item, idx) => (
+              <SquareCardHome
+                key={item.name + idx}
+                name={item.name}
+                price={item.price}
+                img={item.img}
+                size={item.size}
+              />
+            ))}
+          </View>,
+          <View style={style.row} key="row2">
+            {filtered.slice(2, 4).map((item, idx) => (
+              <SquareCardHome
+                key={item.name + idx}
+                name={item.name}
+                price={item.price}
+                img={item.img}
+                size={item.size}
+              />
+            ))}
+          </View>,
+          filtered.length === 0 && (
+            <Text key="nores" style={{ textAlign: 'center', color: '#888', marginVertical: 20 }}>
+              No se encontraron productos.
+            </Text>
+          )
+        ];
+      })()}
       <View style={{ height: 50, width: 50 }} />
     </ScrollView>
   );
