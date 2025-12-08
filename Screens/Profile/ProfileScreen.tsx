@@ -1,4 +1,11 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Linking,
+} from "react-native";
 import React from "react";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
@@ -7,11 +14,33 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
 
 import { signOut } from "firebase/auth";
-import { auth } from "../Utils/firebase";
-import { useAuthStore } from "../Utils/store_auth";
+import { auth } from "../../Utils/firebase";
+import { useAuthStore } from "../../Utils/store_auth";
+import { RootStackParamsP } from "../../Navigation/StackN_Profile";
 
-const ProfileScreen = () => {
+import { StackNavigationProp } from "@react-navigation/stack";
+
+type HomeNavProp = StackNavigationProp<RootStackParamsP, "Profile">;
+
+type Props = {
+  navigation: HomeNavProp;
+};
+
+const ProfileScreen = ({ navigation }: Props) => {
   const setUser = useAuthStore((s) => s.setUser);
+
+  const openWhatsApp = (phone: string) => {
+    const url = `https://wa.me/${phone}`; // número en formato internacional, sin signos ni espacios
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (!supported) {
+          console.log("No se puede abrir WhatsApp");
+        } else {
+          return Linking.openURL(url);
+        }
+      })
+      .catch((err) => console.log(err));
+  };
 
   const handleLogout = async () => {
     try {
@@ -30,36 +59,48 @@ const ProfileScreen = () => {
       </View>
       <Image
         style={style.img}
-        source={require("../assets/Images/image 15.png")}
+        source={require("../../assets/Images/image 15.png")}
       />
       <Text style={style.name}>Maria martinez</Text>
       <Text style={style.email}>maria.martinez@gmail.com</Text>
 
-      <View style={style.options}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Orders")}
+        style={style.options}
+      >
         <AntDesign name="clock-circle" size={32} color="orange" />
         <Text style={style.optext}>Mis pedidos</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
-      </View>
-      <View style={style.options}>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Directions")}
+        style={style.options}
+      >
         <Ionicons name="location-outline" size={32} color="orange" />
         <Text style={style.optext}>Direccion</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
-      </View>
-      <View style={style.options}>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Payment")}
+        style={style.options}
+      >
         <MaterialIcons name="payment" size={32} color="orange" />
         <Text style={style.optext}>Metodos de pago</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
-      </View>
-      <View style={style.options}>
+      </TouchableOpacity>
+      <TouchableOpacity  onPress={()=> openWhatsApp("7716849441")} style={style.options}>
         <Feather name="help-circle" size={32} color="orange" />
         <Text style={style.optext}>Ayuda y soporte</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
-      </View>
-      <View style={style.options}>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Setting")}
+        style={style.options}
+      >
         <Feather name="settings" size={32} color="orange" />
         <Text style={style.optext}>Configuracion</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
-      </View>
+      </TouchableOpacity>
       <TouchableOpacity onPress={handleLogout}>
         <Text style={style.close}>Cerrar sesión</Text>
       </TouchableOpacity>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useCart } from "../Components/CartContext";
+import { useCart } from "../../Components/CartContext";
 
 type Order = {
   id: string;
@@ -26,7 +26,7 @@ export default function OrdersubmitScreen() {
     );
 
     const now = Date.now();
-    const estimated = now + 1 * 60 * 1000; // +30 minutos
+    const estimated = now + 30 * 60 * 1000; // +30 minutos
 
     const order: Order = {
       id: `order_${now}`,

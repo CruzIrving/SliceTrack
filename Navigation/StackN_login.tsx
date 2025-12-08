@@ -1,9 +1,7 @@
-import { View, Text } from "react-native";
 import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import TabNavigation from "./TabNavigation";
-import LoginScreen from "../Screens/LoginScreen";
-import RegisterScreen from "../Screens/RegisterScreen";
+import LoginScreen from "../Screens/Login/LoginScreen";
+import RegisterScreen from "../Screens/Login/RegisterScreen";
 
 export type RootStackParams = {
   Login: undefined;

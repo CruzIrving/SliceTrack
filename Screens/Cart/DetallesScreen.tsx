@@ -6,9 +6,9 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { useCart } from "../Components/CartContext"; // tu contexto del carrito
-import DireccionCard from "../Components/Location";
-import PagoCard from "../Components/PagoCard";
+import { useCart } from "../../Components/CartContext"; // tu contexto del carrito
+import DireccionCard from "../../Components/Location";
+import PagoCard from "../../Components/PagoCard";
 
 const DetallesPedidoScreen = ({ navigation }: any) => {
   const { cart, selectedDireccionId, selectedPaymentId } = useCart();

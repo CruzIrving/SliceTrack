@@ -2,13 +2,12 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../Screens/HomeScreen";
 import MenuScreen from "../Screens/MenuScreen";
-import CarritoScreen from "../Screens/CarritoScreen";
-import ProfileScreen from "../Screens/ProfileScreen";
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from '@expo/vector-icons/Feather';
 import StackN_carrito from "./StackN_carrito";
+import StackN_Profile from "./StackN_Profile";
 
 const Tab = createBottomTabNavigator();
 
@@ -61,7 +60,7 @@ const TabNavigation = () => {
       />
       <Tab.Screen
         name="Perfil"
-        component={ProfileScreen}
+        component={StackN_Profile}
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) =>

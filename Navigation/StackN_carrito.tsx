@@ -1,8 +1,8 @@
 import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import CarritoScreen from "../Screens/CarritoScreen";
-import DetallesScreen from "../Screens/DetallesScreen";
-import Ordersubmit from "../Screens/Ordersubmit";
+import CarritoScreen from "../Screens/Cart/CarritoScreen";
+import DetallesScreen from "../Screens/Cart/DetallesScreen";
+import Ordersubmit from "../Screens/Cart/Ordersubmit";
 
 export type RootStackParamsC = {
   Carro: undefined;

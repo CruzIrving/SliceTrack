@@ -9,12 +9,12 @@ import {
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParams } from "../Navigation/StackN_login";
+import { RootStackParams } from "../../Navigation/StackN_login";
 import { useState } from "react";
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../Utils/firebase";
-import { useAuthStore } from "../Utils/store_auth";
+import { auth } from "../../Utils/firebase";
+import { useAuthStore } from "../../Utils/store_auth";
 
 type HomeNavProp = StackNavigationProp<RootStackParams, "Login">;
 
@@ -144,7 +144,7 @@ const RegisterScreen = ({ navigation }: Props) => {
           <Text style={style.textbtn}> {loading ? "Cargando...": "Registrar"}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
-          <Image source={require("../assets/Icons/Google.png")} />
+          <Image source={require("../../assets/Icons/Google.png")} />
           <Text style={style.textbtn}>Registrar con Google</Text>
         </TouchableOpacity>
         <Text>

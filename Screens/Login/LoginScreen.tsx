@@ -10,12 +10,12 @@ import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParams } from "../Navigation/StackN_login";
+import { RootStackParams } from "../../Navigation/StackN_login";
 
 import { useState } from "react";
 
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../Utils/firebase";
+import { auth } from "../../Utils/firebase";
 
 type HomeNavProp = StackNavigationProp<RootStackParams, "Login">;
 
@@ -128,7 +128,7 @@ const LoginScreen = ({ navigation }: Props) => {
             { loading ? "Cargando..." : "Ingresar"}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
-          <Image source={require("../assets/Icons/Google.png")} />
+          <Image source={require("../../assets/Icons/Google.png")} />
           <Text style={style.textbtn}>Ingresar con Google</Text>
         </TouchableOpacity>
         <View

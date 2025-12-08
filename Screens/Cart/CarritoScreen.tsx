@@ -7,11 +7,11 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { useCart } from "../Components/CartContext";
+import { useCart } from "../../Components/CartContext";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamsC } from "../Navigation/StackN_carrito";
+import { RootStackParamsC } from "../../Navigation/StackN_carrito";
 
 type HomeNavProp = StackNavigationProp<RootStackParamsC, "Carro">;
 

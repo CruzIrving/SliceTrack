@@ -29,10 +29,9 @@ export type Order = {
   id: string;
   items: any[];
   address: string;
-  createdAt: number;        // timestamp
+  createdAt: number; // timestamp
   estimatedDelivery: number; // timestamp
 };
-
 
 export type UserAddress = {
   id: string;
@@ -44,7 +43,6 @@ type CartContextType = {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
 
-  // 🔥 NUEVAS
   increaseQuantity: (id: string) => void;
   decreaseQuantity: (id: string) => void;
 
@@ -53,11 +51,15 @@ type CartContextType = {
 
   direcciones: UserAddress[];
   addDireccion: (dir: UserAddress) => Promise<void>;
+  removeDireccion: (id: string) => Promise<void>; 
+  clearDirecciones: () => Promise<void>; 
   selectedDireccionId: string | null;
   setSelectedDireccion: (id: string | null) => Promise<void>;
 
   pagos: PaymentMethod[];
   addPago: (pago: PaymentMethod) => Promise<void>;
+  removePago: (id: string) => Promise<void>; 
+  clearPagos: () => Promise<void>; 
   selectedPaymentId: string | null;
   setSelectedPayment: (id: string | null) => Promise<void>;
 };
@@ -68,12 +70,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const [direcciones, setDirecciones] = useState<UserAddress[]>([]);
-  const [selectedDireccionId, setSelectedDireccionIdState] =
-    useState<string | null>(null);
+  const [selectedDireccionId, setSelectedDireccionIdState] = useState<
+    string | null
+  >(null);
 
   const [pagos, setPagos] = useState<PaymentMethod[]>([]);
-  const [selectedPaymentId, setSelectedPaymentIdState] =
-    useState<string | null>(null);
+  const [selectedPaymentId, setSelectedPaymentIdState] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     (async () => {
@@ -149,9 +153,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const increaseQuantity = (id: string) => {
     setCart((prev) =>
       prev.map((i) =>
-        i.id === id
-          ? { ...i, quantity: (i.quantity || 1) + 1 }
-          : i
+        i.id === id ? { ...i, quantity: (i.quantity || 1) + 1 } : i
       )
     );
   };
@@ -161,9 +163,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart((prev) =>
       prev
         .map((i) =>
-          i.id === id
-            ? { ...i, quantity: (i.quantity || 1) - 1 }
-            : i
+          i.id === id ? { ...i, quantity: (i.quantity || 1) - 1 } : i
         )
         .filter((i) => (i.quantity || 0) > 0)
     );
@@ -174,25 +174,45 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => setCart([]);
 
+  // --- Direcciones ---
+  const removeDireccion = async (id: string) => {
+    const updated = direcciones.filter((d) => d.id !== id);
+    await persistDirecciones(updated);
+  };
+
+  const clearDirecciones = async () => {
+    await persistDirecciones([]);
+  };
+
+  // --- Pagos ---
+  const removePago = async (id: string) => {
+    const updated = pagos.filter((p) => p.id !== id);
+    await persistPagos(updated);
+  };
+
+  const clearPagos = async () => {
+    await persistPagos([]);
+  };
+
   return (
     <CartContext.Provider
       value={{
         cart,
         addToCart,
-
         increaseQuantity,
         decreaseQuantity,
-
         removeFromCart,
         clearCart,
-
         direcciones,
         addDireccion,
+        removeDireccion, // ✅ nuevo
+        clearDirecciones, // ✅ nuevo
         selectedDireccionId,
         setSelectedDireccion,
-
         pagos,
         addPago,
+        removePago, // ✅ nuevo
+        clearPagos, // ✅ nuevo
         selectedPaymentId,
         setSelectedPayment,
       }}
