@@ -9,6 +9,7 @@ import {
 import React, { useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { sendPasswordResetEmail } from "firebase/auth";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParams } from "../../Navigation/StackN_login";
 
@@ -32,16 +33,36 @@ const LoginScreen = ({ navigation }: Props) => {
   const [error, setError] = useState("");
   const [checked, setChecked] = useState(false);
 
-  const validateEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const validateEmail = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const validate = () => {
     if (num.length !== 10) return "El teléfono debe tener 10 dígitos";
     if (!email.trim()) return "El correo no puede estar vacío.";
     if (!validateEmail(email.trim())) return "Formato de correo inválido.";
     if (!pass.trim()) return "La contraseña no puede estar vacía.";
-    if (pass.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
+    if (pass.length < 6)
+      return "La contraseña debe tener al menos 6 caracteres.";
     return null;
   };
+const handleForgotPassword = async () => {
+  if (!email.trim()) {
+    alert("Ingresa tu correo para recuperar la contraseña.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    await sendPasswordResetEmail(auth, email.trim());
+    alert("Se ha enviado un mensaje para restablecer la contraseña.");
+  } catch (e) {
+    console.log(e); // Para depuración
+    alert("Error al enviar correo. Intenta de nuevo.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleLogin = async () => {
     const validationError = validate();
@@ -99,7 +120,9 @@ const LoginScreen = ({ navigation }: Props) => {
 
       <View style={style.card}>
         <Text style={style.title}>Bienvenido</Text>
-        <Text style={style.text}>Bienvenido de nuevo, ingresa tus datos por favor</Text>
+        <Text style={style.text}>
+          Bienvenido de nuevo, ingresa tus datos por favor
+        </Text>
 
         <Text style={style.label}>Email</Text>
         <TextInput
@@ -129,15 +152,20 @@ const LoginScreen = ({ navigation }: Props) => {
         {!!error && <Text style={{ color: "#f00" }}>{error}</Text>}
 
         <View style={style.remember}>
-          <TouchableOpacity style={style.recordar} onPress={() => setChecked(!checked)}>
-            <View style={[style.box, checked && style.boxChecked]} />
-            <Text style={{ fontSize: 12, fontWeight: "900" }}>Recordar</Text>
+          <TouchableOpacity onPress={handleForgotPassword}>
+            <Text style={{ fontSize: 12, fontWeight: "900", color: "#ff6b00" }}>
+              ¿Olvidaste tu contraseña?
+            </Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 12, fontWeight: "900" }}>¿Olvidaste tu contraseña?</Text>
         </View>
 
-        <TouchableOpacity onPress={handleLogin} style={[style.button, { backgroundColor: "#ff6b00" }]}>
-          <Text style={style.textbtn}>{loading ? "Cargando..." : "Ingresar"}</Text>
+        <TouchableOpacity
+          onPress={handleLogin}
+          style={[style.button, { backgroundColor: "#ff6b00" }]}
+        >
+          <Text style={style.textbtn}>
+            {loading ? "Cargando..." : "Ingresar"}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
@@ -145,10 +173,21 @@ const LoginScreen = ({ navigation }: Props) => {
           <Text style={style.textbtn}>Ingresar con Google</Text>
         </TouchableOpacity>
 
-        <View style={{ flexDirection: "row", justifyContent: "flex-start", gap: 15, marginTop: 20 }}>
-          <Text style={{ fontSize: 16, fontWeight: "900" }}>¿No tienes cuenta?</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-start",
+            gap: 15,
+            marginTop: 20,
+          }}
+        >
+          <Text style={{ fontSize: 16, fontWeight: "900" }}>
+            ¿No tienes cuenta?
+          </Text>
           <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-            <Text style={{ fontSize: 16, fontWeight: "900", color: "#ff6b00" }}>Regístrate</Text>
+            <Text style={{ fontSize: 16, fontWeight: "900", color: "#ff6b00" }}>
+              Regístrate
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -161,15 +200,58 @@ export default LoginScreen;
 const style = StyleSheet.create({
   container: { flex: 1, alignItems: "center", justifyContent: "center" },
   logo: { fontSize: 32, fontWeight: "900", color: "#ff6b00" },
-  card: { width: 300, padding: 20, marginTop: 40, backgroundColor: "#fff", borderRadius: 20 },
+  card: {
+    width: 300,
+    padding: 20,
+    marginTop: 40,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+  },
   title: { fontWeight: "900", fontSize: 24 },
-  text: { color: "#676767ff", fontWeight: "700", fontSize: 14, marginVertical: 5 },
+  text: {
+    color: "#676767ff",
+    fontWeight: "700",
+    fontSize: 14,
+    marginVertical: 5,
+  },
   label: { fontWeight: "700", paddingLeft: 3, fontSize: 16, marginTop: 10 },
-  input: { width: "100%", height: 40, borderColor: "#ff6b00", borderWidth: 1, borderRadius: 7, paddingHorizontal: 5 },
-  remember: { marginTop: 10, width: "100%", flexDirection: "row", justifyContent: "space-between" },
+  input: {
+    width: "100%",
+    height: 40,
+    borderColor: "#ff6b00",
+    borderWidth: 1,
+    borderRadius: 7,
+    paddingHorizontal: 5,
+  },
+  remember: {
+    marginTop: 10,
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   recordar: { gap: 5, flexDirection: "row" },
-  box: { width: 16, height: 16, borderWidth: 2, borderColor: "#ff6b00", justifyContent: "center", alignItems: "center" },
+  box: {
+    width: 16,
+    height: 16,
+    borderWidth: 2,
+    borderColor: "#ff6b00",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   boxChecked: { backgroundColor: "#ff1b00" },
-  button: { width: "100%", marginTop: 10, borderRadius: 5, flexDirection: "row", alignItems: "center", justifyContent: "center" },
-  textbtn: { textAlign: "center", color: "#fff", fontWeight: "700", fontSize: 16, padding: 10 },
+  button: {
+    width: "100%",
+    marginTop: 10,
+    borderRadius: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textbtn: {
+    textAlign: "center",
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+    padding: 10,
+  },
 });

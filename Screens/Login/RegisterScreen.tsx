@@ -6,15 +6,15 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParams } from "../../Navigation/StackN_login";
-import { useState } from "react";
 
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../Utils/firebase";
-import { useAuthStore } from "../../Utils/store_auth";
+import { useUser } from "../../Components/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type HomeNavProp = StackNavigationProp<RootStackParams, "Login">;
 
@@ -23,13 +23,13 @@ type Props = {
 };
 
 const RegisterScreen = ({ navigation }: Props) => {
-  const setUser = useAuthStore((s) => s.setUser);
+  const { setUser } = useUser();
 
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [Confirmpass, setConfirmPass] = useState("");
-  const [checked, setChecked] = useState(false);
   const [num, setNum] = useState("");
+  const [checked, setChecked] = useState(false);
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,8 +40,8 @@ const RegisterScreen = ({ navigation }: Props) => {
   const handleRegister = async () => {
     setError("");
 
-    if (num.length < 10 || num.length > 10){
-      setError("El telefono solo debe tener 10 digitos")
+    if (num.length !== 10) {
+      setError("El teléfono debe tener 10 dígitos");
       return;
     }
 
@@ -67,13 +67,29 @@ const RegisterScreen = ({ navigation }: Props) => {
 
     try {
       setLoading(true);
-      const res = await createUserWithEmailAndPassword(auth, email, pass);
+      const res = await createUserWithEmailAndPassword(auth, email.trim(), pass.trim());
 
-      // guardamos usuario en Zustand
-      setUser(res.user);
+      const username = email.split("@")[0];
+
+      // Guardar en AsyncStorage
+      await AsyncStorage.setItem("@user_email", email.trim());
+      await AsyncStorage.setItem("@user_name", username);
+      await AsyncStorage.setItem("@user_number", num);
+      await AsyncStorage.setItem("@user_image", "");
+
+      // Actualizar contexto
+      setUser({
+        name: username,
+        email: email.trim(),
+        phone: num,
+        image: "",
+      });
+
+      // Navegar a Home o pantalla principal
+      // navigation.navigate("Home");
+
     } catch (err: any) {
       console.log(err.code);
-
       switch (err.code) {
         case "auth/email-already-in-use":
           setError("Este correo ya está registrado.");
@@ -104,7 +120,7 @@ const RegisterScreen = ({ navigation }: Props) => {
       <View style={style.card}>
         <Text style={style.title}>Bienvenido</Text>
         <Text style={style.text}>
-          Bienvenido a Slice Track, ingreses sus datos por favor
+          Bienvenido a Slice Track, ingresa tus datos por favor
         </Text>
 
         <Text style={style.label}>Email</Text>
@@ -114,23 +130,23 @@ const RegisterScreen = ({ navigation }: Props) => {
           autoCapitalize="none"
           keyboardType="email-address"
           onChangeText={setEmail}
-        ></TextInput>
+        />
 
-        <Text style={style.label}>Numero</Text>
+        <Text style={style.label}>Número</Text>
         <TextInput
           keyboardType="numeric"
           style={style.input}
           value={num}
           onChangeText={setNum}
-        ></TextInput>
+        />
 
         <Text style={style.label}>Contraseña</Text>
         <TextInput
           style={style.input}
-          value={pass}
           secureTextEntry
+          value={pass}
           onChangeText={setPass}
-        ></TextInput>
+        />
 
         <Text style={style.label}>Confirmar Contraseña</Text>
         <TextInput
@@ -138,17 +154,9 @@ const RegisterScreen = ({ navigation }: Props) => {
           secureTextEntry
           value={Confirmpass}
           onChangeText={setConfirmPass}
-        ></TextInput>
+        />
 
-        {error !== "" && <Text style={{ color: "#f00" }}>{error}</Text>}
-
-        <TouchableOpacity
-          style={style.recordar}
-          onPress={() => setChecked(!checked)}
-        >
-          <View style={[style.box, checked && style.boxChecked]}></View>
-          <Text style={{ fontSize: 12, fontWeight: 900 }}>Recordar</Text>
-        </TouchableOpacity>
+        {!!error && <Text style={{ color: "#f00" }}>{error}</Text>}
 
         <TouchableOpacity
           onPress={handleRegister}
@@ -156,29 +164,21 @@ const RegisterScreen = ({ navigation }: Props) => {
           style={[style.button, { backgroundColor: "#ff6b00" }]}
         >
           <Text style={style.textbtn}>
-            {" "}
             {loading ? "Cargando..." : "Registrar"}
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
           <Image source={require("../../assets/Icons/Google.png")} />
           <Text style={style.textbtn}>Registrar con Google</Text>
         </TouchableOpacity>
-        <Text></Text>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-start",
-            gap: 15,
-            marginTop: 5,
-            marginBottom: 10,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: 900 }}>
+
+        <View style={{ flexDirection: "row", gap: 15, marginTop: 10 }}>
+          <Text style={{ fontSize: 16, fontWeight: "900" }}>
             ¿Ya tienes cuenta?
           </Text>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={{ fontSize: 16, fontWeight: 900, color: "#ff6b00" }}>
+            <Text style={{ fontSize: 16, fontWeight: "900", color: "#ff6b00" }}>
               Inicia sesión
             </Text>
           </TouchableOpacity>
@@ -187,6 +187,8 @@ const RegisterScreen = ({ navigation }: Props) => {
     </LinearGradient>
   );
 };
+// Styles se mantienen igual que tu versión actual
+
 
 export default RegisterScreen;
 

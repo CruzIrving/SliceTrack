@@ -66,7 +66,7 @@ const DetallesPedidoScreen = ({ navigation }: any) => {
             navigation.navigate("Order");
           }}
           disabled={!isFormValid}
-          style={[styles.confirmbtn, {backgroundColor: isFormValid ? "#ff6b00" : "#999" ,}]}
+          style={[styles.confirmbtn, {backgroundColor: isFormValid ? "#ff6b00" : "#999  " ,}]}
         >
           <Text style={styles.confirmText}>Confirmar orden</Text>
         </TouchableOpacity>

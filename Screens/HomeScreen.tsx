@@ -201,7 +201,7 @@ const HomeScreen = () => {
       </Text>
 
       <Text style={style.sectionTitle}>
-        {categoria === 'pizzas' ? 'Pizzas' : categoria === 'bebidas' ? 'Bebidas' : 'Combos'}
+        Populares
       </Text>
       {(() => {
         // Filtrar productos por búsqueda
