@@ -85,9 +85,6 @@ const OrderHistoryScreen = ({ navigation }: Props) => {
       <Text style={styles.time}>
         Pedido realizado: {new Date(item.createdAt).toLocaleTimeString()}
       </Text>
-      <Text style={styles.time}>
-        Hora de llegada Aprox: {new Date(item.createdAt + 30 * 60 * 1000).toLocaleTimeString()}
-      </Text>
       <Text style={styles.itemsTitle}>Productos:</Text>
       {item.items.map((i) => (
         <Text key={i.id} style={styles.itemText}>

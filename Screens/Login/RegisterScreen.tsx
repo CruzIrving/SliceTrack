@@ -29,6 +29,7 @@ const RegisterScreen = ({ navigation }: Props) => {
   const [pass, setPass] = useState("");
   const [Confirmpass, setConfirmPass] = useState("");
   const [checked, setChecked] = useState(false);
+  const [num, setNum] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,6 +39,11 @@ const RegisterScreen = ({ navigation }: Props) => {
 
   const handleRegister = async () => {
     setError("");
+
+    if (num.length < 10 || num.length > 10){
+      setError("El telefono solo debe tener 10 digitos")
+      return;
+    }
 
     if (!email.trim() || !pass.trim() || !Confirmpass.trim()) {
       setError("Completa todos los campos.");
@@ -110,6 +116,14 @@ const RegisterScreen = ({ navigation }: Props) => {
           onChangeText={setEmail}
         ></TextInput>
 
+        <Text style={style.label}>Numero</Text>
+        <TextInput
+          keyboardType="numeric"
+          style={style.input}
+          value={num}
+          onChangeText={setNum}
+        ></TextInput>
+
         <Text style={style.label}>Contraseña</Text>
         <TextInput
           style={style.input}
@@ -141,14 +155,16 @@ const RegisterScreen = ({ navigation }: Props) => {
           disabled={loading}
           style={[style.button, { backgroundColor: "#ff6b00" }]}
         >
-          <Text style={style.textbtn}> {loading ? "Cargando...": "Registrar"}</Text>
+          <Text style={style.textbtn}>
+            {" "}
+            {loading ? "Cargando..." : "Registrar"}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
           <Image source={require("../../assets/Icons/Google.png")} />
           <Text style={style.textbtn}>Registrar con Google</Text>
         </TouchableOpacity>
-        <Text>
-        </Text>
+        <Text></Text>
         <View
           style={{
             flexDirection: "row",
@@ -161,7 +177,7 @@ const RegisterScreen = ({ navigation }: Props) => {
           <Text style={{ fontSize: 16, fontWeight: 900 }}>
             ¿Ya tienes cuenta?
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={{ fontSize: 16, fontWeight: 900, color: "#ff6b00" }}>
               Inicia sesión
             </Text>
@@ -205,7 +221,7 @@ const style = StyleSheet.create({
   label: {
     fontWeight: 700,
     paddingLeft: 3,
-    fontSize: 20,
+    fontSize: 16,
     marginTop: 10,
   },
   input: {
@@ -245,7 +261,7 @@ const style = StyleSheet.create({
     textAlign: "center",
     color: "#fff",
     fontWeight: 700,
-    fontSize: 20,
+    fontSize: 16,
     padding: 10,
   },
 });

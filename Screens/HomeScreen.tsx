@@ -12,8 +12,10 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import SquareCardHome from "../Components/SquareCardHome";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useUser } from "../Components/UserContext";
 
 const HomeScreen = () => {
+  const { user } = useUser();
 
   return (
     <ScrollView style={style.container}>
@@ -25,7 +27,11 @@ const HomeScreen = () => {
         <TouchableOpacity>
           <Image
             style={style.profile}
-            source={require("../assets/Images/image 8.png")}
+            source={
+              user && user.image
+                ? { uri: user.image }
+                : require("../assets/Images/user.png")
+            }
           />
         </TouchableOpacity>
       </View>
@@ -128,7 +134,7 @@ const HomeScreen = () => {
           size="Mediana"
         />
       </View>
-      <View style={{ height: 50, width: 50, }}></View>
+      <View style={{ height: 50, width: 50 }} />
     </ScrollView>
   );
 };

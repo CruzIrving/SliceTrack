@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./Utils/firebase";
 import { CartProvider } from "./Components/CartContext";
+import { UserProvider } from "./Components/UserContext";
 
 export default function App() {
   const user = useAuthStore((s) => s.user);
@@ -32,11 +33,14 @@ export default function App() {
   if (!loaded) return null;
 
   return (
-    <CartProvider>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        {user ? <TabNavigation /> : <StackN_login />}
-      </NavigationContainer>
-    </CartProvider>
+    <UserProvider>
+      <CartProvider>
+        <NavigationContainer>
+          <StatusBar style="auto" />
+          {user ? <TabNavigation /> : <StackN_login />}
+        </NavigationContainer>
+      </CartProvider>
+    </UserProvider>
   );
 }
+

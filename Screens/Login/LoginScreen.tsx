@@ -6,16 +6,16 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParams } from "../../Navigation/StackN_login";
 
-import { useState } from "react";
-
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../Utils/firebase";
+import { useUser } from "../../Components/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type HomeNavProp = StackNavigationProp<RootStackParams, "Login">;
 
@@ -24,24 +24,22 @@ type Props = {
 };
 
 const LoginScreen = ({ navigation }: Props) => {
-  const  [ loading, setLoading ] = useState(false);
+  const { setUser } = useUser();
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [num, setNum] = useState("");
   const [error, setError] = useState("");
   const [checked, setChecked] = useState(false);
 
-  const validateEmail = (value: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(value);
-  };
+  const validateEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const validate = () => {
+    if (num.length !== 10) return "El teléfono debe tener 10 dígitos";
     if (!email.trim()) return "El correo no puede estar vacío.";
     if (!validateEmail(email.trim())) return "Formato de correo inválido.";
     if (!pass.trim()) return "La contraseña no puede estar vacía.";
-    if (pass.length < 6)
-      return "La contraseña debe tener al menos 6 caracteres.";
-
+    if (pass.length < 6) return "La contraseña debe tener al menos 6 caracteres.";
     return null;
   };
 
@@ -53,8 +51,24 @@ const LoginScreen = ({ navigation }: Props) => {
     }
 
     try {
-      setLoading(true)
+      setLoading(true);
       await signInWithEmailAndPassword(auth, email.trim(), pass.trim());
+
+      const username = email.split("@")[0];
+
+      // Guardar en AsyncStorage
+      await AsyncStorage.setItem("@user_email", email.trim());
+      await AsyncStorage.setItem("@user_name", username);
+      await AsyncStorage.setItem("@user_number", num);
+      await AsyncStorage.setItem("@user_image", "");
+
+      // Actualizar contexto
+      setUser({
+        name: username,
+        email: email.trim(),
+        phone: num,
+        image: "",
+      });
     } catch (e: any) {
       switch (e.code) {
         case "auth/invalid-credential":
@@ -69,8 +83,8 @@ const LoginScreen = ({ navigation }: Props) => {
         default:
           setError("Error inesperado. Intenta de nuevo.");
       }
-    }finally{
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -81,12 +95,11 @@ const LoginScreen = ({ navigation }: Props) => {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      <Text style={style.logo}>Logo</Text>
+      <Text style={style.logo}>Slice Track</Text>
+
       <View style={style.card}>
         <Text style={style.title}>Bienvenido</Text>
-        <Text style={style.text}>
-          Bienvenido de nuevo, ingreses sus datos por favor
-        </Text>
+        <Text style={style.text}>Bienvenido de nuevo, ingresa tus datos por favor</Text>
 
         <Text style={style.label}>Email</Text>
         <TextInput
@@ -95,7 +108,15 @@ const LoginScreen = ({ navigation }: Props) => {
           autoCapitalize="none"
           keyboardType="email-address"
           onChangeText={(text) => setEmail(text.trim())}
-        ></TextInput>
+        />
+
+        <Text style={style.label}>Número</Text>
+        <TextInput
+          keyboardType="numeric"
+          style={style.input}
+          value={num}
+          onChangeText={setNum}
+        />
 
         <Text style={style.label}>Contraseña</Text>
         <TextInput
@@ -103,49 +124,31 @@ const LoginScreen = ({ navigation }: Props) => {
           style={style.input}
           value={pass}
           onChangeText={setPass}
-        ></TextInput>
+        />
 
         {!!error && <Text style={{ color: "#f00" }}>{error}</Text>}
 
         <View style={style.remember}>
-          <TouchableOpacity
-            style={style.recordar}
-            onPress={() => setChecked(!checked)}
-          >
-            <View style={[style.box, checked && style.boxChecked]}></View>
-            <Text style={{ fontSize: 12, fontWeight: 900 }}>Recordar</Text>
+          <TouchableOpacity style={style.recordar} onPress={() => setChecked(!checked)}>
+            <View style={[style.box, checked && style.boxChecked]} />
+            <Text style={{ fontSize: 12, fontWeight: "900" }}>Recordar</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 12, fontWeight: 900 }}>
-            ¿Olvidaste tu contraseña?
-          </Text>
+          <Text style={{ fontSize: 12, fontWeight: "900" }}>¿Olvidaste tu contraseña?</Text>
         </View>
 
-        <TouchableOpacity
-          onPress={handleLogin}
-          style={[style.button, { backgroundColor: "#ff6b00" }]}
-        >
-          <Text style={style.textbtn}>
-            { loading ? "Cargando..." : "Ingresar"}</Text>
+        <TouchableOpacity onPress={handleLogin} style={[style.button, { backgroundColor: "#ff6b00" }]}>
+          <Text style={style.textbtn}>{loading ? "Cargando..." : "Ingresar"}</Text>
         </TouchableOpacity>
+
         <TouchableOpacity style={[style.button, { backgroundColor: "#000" }]}>
           <Image source={require("../../assets/Icons/Google.png")} />
           <Text style={style.textbtn}>Ingresar con Google</Text>
         </TouchableOpacity>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-start",
-            gap: 15,
-            marginTop: 20,
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: 900 }}>
-            ¿No tienes cuenta?
-          </Text>
+
+        <View style={{ flexDirection: "row", justifyContent: "flex-start", gap: 15, marginTop: 20 }}>
+          <Text style={{ fontSize: 16, fontWeight: "900" }}>¿No tienes cuenta?</Text>
           <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-            <Text style={{ fontSize: 16, fontWeight: 900, color: "#ff6b00" }}>
-              Registrate
-            </Text>
+            <Text style={{ fontSize: 16, fontWeight: "900", color: "#ff6b00" }}>Regístrate</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -156,91 +159,17 @@ const LoginScreen = ({ navigation }: Props) => {
 export default LoginScreen;
 
 const style = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logo: {
-    backgroundColor: "#fff",
-    width: 150,
-    height: 150,
-    fontSize: 25,
-    fontWeight: "bold",
-    lineHeight: 145,
-    borderColor: "#ffb600",
-    borderWidth: 2,
-    textAlign: "center",
-    borderRadius: 100,
-  },
-  card: {
-    width: 300,
-    height: 500,
-    padding: 20,
-    marginTop: 40,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-  },
-  title: {
-    fontWeight: 900,
-    fontSize: 24,
-  },
-  text: {
-    color: "#676767ff",
-    fontWeight: 700,
-    fontSize: 14,
-    marginVertical: 5,
-  },
-  label: {
-    fontWeight: 700,
-    paddingLeft: 3,
-    fontSize: 20,
-    marginTop: 10,
-  },
-  input: {
-    width: "100%",
-    height: 40,
-    borderColor: "#ff6b00",
-    borderWidth: 1,
-    borderRadius: 7,
-  },
-  remember: {
-    marginTop: 10,
-    display: "flex",
-    width: "100%",
-    justifyContent: "space-between",
-    flexDirection: "row",
-  },
-  recordar: {
-    gap: 5,
-    display: "flex",
-    flexDirection: "row",
-  },
-  box: {
-    width: 16,
-    height: 16,
-    borderWidth: 2,
-    borderColor: "#ff6b00",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  boxChecked: {
-    backgroundColor: "#ff1b00",
-  },
-  button: {
-    width: "100%",
-    marginTop: 10,
-    borderRadius: 5,
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  textbtn: {
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: 700,
-    fontSize: 20,
-    padding: 10,
-  },
+  container: { flex: 1, alignItems: "center", justifyContent: "center" },
+  logo: { fontSize: 32, fontWeight: "900", color: "#ff6b00" },
+  card: { width: 300, padding: 20, marginTop: 40, backgroundColor: "#fff", borderRadius: 20 },
+  title: { fontWeight: "900", fontSize: 24 },
+  text: { color: "#676767ff", fontWeight: "700", fontSize: 14, marginVertical: 5 },
+  label: { fontWeight: "700", paddingLeft: 3, fontSize: 16, marginTop: 10 },
+  input: { width: "100%", height: 40, borderColor: "#ff6b00", borderWidth: 1, borderRadius: 7, paddingHorizontal: 5 },
+  remember: { marginTop: 10, width: "100%", flexDirection: "row", justifyContent: "space-between" },
+  recordar: { gap: 5, flexDirection: "row" },
+  box: { width: 16, height: 16, borderWidth: 2, borderColor: "#ff6b00", justifyContent: "center", alignItems: "center" },
+  boxChecked: { backgroundColor: "#ff1b00" },
+  button: { width: "100%", marginTop: 10, borderRadius: 5, flexDirection: "row", alignItems: "center", justifyContent: "center" },
+  textbtn: { textAlign: "center", color: "#fff", fontWeight: "700", fontSize: 16, padding: 10 },
 });

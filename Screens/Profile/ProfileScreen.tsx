@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -15,10 +15,11 @@ import Feather from "@expo/vector-icons/Feather";
 
 import { signOut } from "firebase/auth";
 import { auth } from "../../Utils/firebase";
-import { useAuthStore } from "../../Utils/store_auth";
-import { RootStackParamsP } from "../../Navigation/StackN_Profile";
+import { useUser } from "../../Components/UserContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamsP } from "../../Navigation/StackN_Profile";
 
 type HomeNavProp = StackNavigationProp<RootStackParamsP, "Profile">;
 
@@ -27,17 +28,31 @@ type Props = {
 };
 
 const ProfileScreen = ({ navigation }: Props) => {
-  const setUser = useAuthStore((s) => s.setUser);
+  const { user, setUser } = useUser();
+
+  // Cargar datos desde AsyncStorage al iniciar
+  useEffect(() => {
+    (async () => {
+      const storedEmail = await AsyncStorage.getItem("@user_email");
+      const storedName = await AsyncStorage.getItem("@user_name");
+      const storedPhone = await AsyncStorage.getItem("@user_number");
+      const storedImage = await AsyncStorage.getItem("@user_image");
+
+      setUser({
+        email: storedEmail || "",
+        name: storedName || "",
+        phone: storedPhone || "",
+        image: storedImage || "",
+      });
+    })();
+  }, []);
 
   const openWhatsApp = (phone: string) => {
-    const url = `https://wa.me/${phone}`; // número en formato internacional, sin signos ni espacios
+    const url = `https://wa.me/${phone}`;
     Linking.canOpenURL(url)
       .then((supported) => {
-        if (!supported) {
-          console.log("No se puede abrir WhatsApp");
-        } else {
-          return Linking.openURL(url);
-        }
+        if (supported) return Linking.openURL(url);
+        console.log("No se puede abrir WhatsApp");
       })
       .catch((err) => console.log(err));
   };
@@ -45,11 +60,13 @@ const ProfileScreen = ({ navigation }: Props) => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setUser(null); // limpia el estado global
+      setUser(null); // limpiar contexto
     } catch (error) {
       console.log("Error al cerrar sesión:", error);
     }
   };
+
+  if (!user) return null; // seguridad
 
   return (
     <View style={{ alignItems: "center" }}>
@@ -57,12 +74,19 @@ const ProfileScreen = ({ navigation }: Props) => {
         <Text style={style.text}>Mi perfil</Text>
         <FontAwesome6 name="bell" size={28} color="gray" />
       </View>
+
       <Image
         style={style.img}
-        source={require("../../assets/Images/image 15.png")}
+        source={
+          user.image
+            ? { uri: user.image }
+            : require("../../assets/Images/user.png")
+        }
       />
-      <Text style={style.name}>Maria martinez</Text>
-      <Text style={style.email}>maria.martinez@gmail.com</Text>
+
+      <Text style={style.name}>{user.name}</Text>
+      <Text style={style.numero}>{user.phone}</Text>
+      <Text style={style.email}>{user.email}</Text>
 
       <TouchableOpacity
         onPress={() => navigation.navigate("Orders")}
@@ -72,35 +96,43 @@ const ProfileScreen = ({ navigation }: Props) => {
         <Text style={style.optext}>Mis pedidos</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
       </TouchableOpacity>
+
       <TouchableOpacity
         onPress={() => navigation.navigate("Directions")}
         style={style.options}
       >
         <Ionicons name="location-outline" size={32} color="orange" />
-        <Text style={style.optext}>Direccion</Text>
+        <Text style={style.optext}>Dirección</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
       </TouchableOpacity>
+
       <TouchableOpacity
         onPress={() => navigation.navigate("Payment")}
         style={style.options}
       >
         <MaterialIcons name="payment" size={32} color="orange" />
-        <Text style={style.optext}>Metodos de pago</Text>
+        <Text style={style.optext}>Métodos de pago</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
       </TouchableOpacity>
-      <TouchableOpacity  onPress={()=> openWhatsApp("7716849441")} style={style.options}>
+
+      <TouchableOpacity
+        onPress={() => openWhatsApp(user.phone)}
+        style={style.options}
+      >
         <Feather name="help-circle" size={32} color="orange" />
         <Text style={style.optext}>Ayuda y soporte</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
       </TouchableOpacity>
+
       <TouchableOpacity
         onPress={() => navigation.navigate("Setting")}
         style={style.options}
       >
         <Feather name="settings" size={32} color="orange" />
-        <Text style={style.optext}>Configuracion</Text>
+        <Text style={style.optext}>Configuración</Text>
         <MaterialIcons name="keyboard-arrow-right" size={24} color="black" />
       </TouchableOpacity>
+
       <TouchableOpacity onPress={handleLogout}>
         <Text style={style.close}>Cerrar sesión</Text>
       </TouchableOpacity>
@@ -111,7 +143,6 @@ const ProfileScreen = ({ navigation }: Props) => {
 const style = StyleSheet.create({
   header: {
     width: "100%",
-    textAlign: "center",
     backgroundColor: "#fff",
     paddingTop: 70,
     paddingBottom: 30,
@@ -121,11 +152,7 @@ const style = StyleSheet.create({
     gap: "25%",
     alignItems: "center",
   },
-  text: {
-    fontSize: 32,
-    fontWeight: 900,
-    color: "#ff6b00",
-  },
+  text: { fontSize: 32, fontWeight: "900", color: "#ff6b00" },
   img: {
     marginTop: 40,
     borderColor: "#000",
@@ -134,15 +161,9 @@ const style = StyleSheet.create({
     width: 150,
     height: 150,
   },
-  name: {
-    fontWeight: 900,
-    fontSize: 20,
-  },
-  email: {
-    fontSize: 16,
-    color: "#7c7c7c",
-    marginBottom: 20,
-  },
+  name: { fontWeight: "900", fontSize: 20 },
+  email: { fontSize: 16, color: "#7c7c7c", marginBottom: 20 },
+  numero: { fontSize: 16, color: "#7c7c7c" },
   options: {
     elevation: 3,
     shadowColor: "#000",
@@ -155,15 +176,8 @@ const style = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  optext: {
-    fontSize: 16,
-  },
-  close: {
-    color: "#959595ff",
-    fontStyle: "italic",
-    marginTop: 25,
-    fontSize: 20,
-  },
+  optext: { fontSize: 16 },
+  close: { color: "#959595ff", fontStyle: "italic", marginTop: 5, fontSize: 20 },
 });
 
 export default ProfileScreen;
