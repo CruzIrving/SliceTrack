@@ -21,6 +21,10 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+#Configuracion de editor
+.vscode/settings.json
+
+
 # debug
 npm-debug.*
 yarn-debug.*
