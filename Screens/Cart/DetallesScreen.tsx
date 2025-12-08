@@ -6,7 +6,7 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { useCart } from "../../Components/CartContext"; // tu contexto del carrito
+import { useCart } from "../../Components/CartContext"; 
 import DireccionCard from "../../Components/Location";
 import PagoCard from "../../Components/PagoCard";
 

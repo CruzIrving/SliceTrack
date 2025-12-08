@@ -12,11 +12,16 @@ import StackN_Profile from "./StackN_Profile";
 const Tab = createBottomTabNavigator();
 
 const TabNavigation = () => {
-
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: "#ff6b00",
+        tabBarInactiveTintColor: "gray",
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 10,
+          paddingTop: 5,
+        },
       }}
     >
       <Tab.Screen
@@ -24,12 +29,9 @@ const TabNavigation = () => {
         component={HomeScreen}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) =>
-            focused ? (
-              <Entypo name="home" size={24} color="orange" />
-            ) : (
-              <Entypo name="home" size={24} color="gray" />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Entypo name="home" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -37,12 +39,9 @@ const TabNavigation = () => {
         component={MenuScreen}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) =>
-            focused ? (
-              <Ionicons name="restaurant" size={24} color="orange" />
-            ) : (
-              <Ionicons name="restaurant" size={24} color="gray" />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name="restaurant" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -50,12 +49,9 @@ const TabNavigation = () => {
         component={StackN_carrito}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) =>
-            focused ? (
-             <Feather name="shopping-cart" size={24} c olor="orange" />
-            ) : (
-            <Feather name="shopping-cart" size={24} color="gray" />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Feather name="shopping-cart" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -63,12 +59,9 @@ const TabNavigation = () => {
         component={StackN_Profile}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) =>
-            focused ? (
-              <FontAwesome6 name="user" size={24} color="orange" />
-            ) : (
-              <FontAwesome6 name="user" size={24} color="gray" />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <FontAwesome6 name="user" size={size} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>

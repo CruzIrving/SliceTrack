@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,11 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useCart } from "../../Components/CartContext";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
-
+import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamsC } from "../../Navigation/StackN_carrito";
 
@@ -25,12 +26,12 @@ const CarritoScreen = ({ navigation }: Props) => {
     removeFromCart,
     increaseQuantity,
     decreaseQuantity,
+    activeOrder, 
   } = useCart();
 
   const subtotal = cart.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
 
   let envio = 0;
-
   switch (true) {
     case subtotal < 100:
       envio = 100;
@@ -56,25 +57,50 @@ const CarritoScreen = ({ navigation }: Props) => {
   return (
     <>
       <Text style={styles.title}>Carrito</Text>
+      {activeOrder && (
+        <TouchableOpacity 
+          style={styles.activeOrderButton}
+          onPress={() => navigation.navigate("OrderTracking", { orderId: activeOrder.id })}
+        >
+          <Ionicons name="cube-outline" size={20} color="#fff" />
+          <Text style={styles.activeOrderText}>Ver Pedido en Curso</Text>
+        </TouchableOpacity>
+      )}
+      
       <View style={styles.container}>
         {cart.length === 0 ? (
-          <Text style={styles.empty}>Tu carrito está vacío</Text>
+          <View style={styles.emptyContainer}>
+            <Ionicons name="cart-outline" size={60} color="#ccc" />
+            <Text style={styles.emptyText}>Tu carrito está vacío</Text>
+            <TouchableOpacity 
+              style={styles.shopButton}
+              onPress={() => {
+                navigation.getParent()?.navigate("Menu");
+              }}
+            >
+              <Text style={styles.shopButtonText}>Seguir Comprando</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             <FlatList
               data={cart}
               keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingBottom: 10 }}
               renderItem={({ item }) => (
                 <View style={styles.item}>
                   {item.image ? (
                     <Image source={item.image} style={styles.img} />
-                  ) : null}
+                  ) : (
+                    <View style={[styles.img, styles.placeholderImg]}>
+                      <Ionicons name="pizza" size={30} color="#ccc" />
+                    </View>
+                  )}
 
                   <View style={{ flex: 1 }}>
                     <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.size}>{item.size}</Text>
+                    {item.size && <Text style={styles.size}>{item.size}</Text>}
 
-                    {/* Controles de cantidad */}
                     <View style={styles.qtyRow}>
                       <TouchableOpacity
                         style={styles.qtyBtn}
@@ -94,13 +120,17 @@ const CarritoScreen = ({ navigation }: Props) => {
                         <Text style={styles.qtyText}>+</Text>
                       </TouchableOpacity>
                     </View>
-
-                    <Text style={styles.price}>${item.price}</Text>
                   </View>
 
-                  <TouchableOpacity onPress={() => removeFromCart(item.id)}>
-                    <EvilIcons name="trash" size={56} color="orange" />
-                  </TouchableOpacity>
+                  <View style={styles.rightSection}>
+                    <Text style={styles.price}>${item.price}</Text>
+                    <TouchableOpacity 
+                      style={styles.deleteBtn}
+                      onPress={() => removeFromCart(item.id)}
+                    >
+                      <EvilIcons name="trash" size={28} color="#ff6b00" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
             />
@@ -108,25 +138,33 @@ const CarritoScreen = ({ navigation }: Props) => {
             <View style={styles.footer}>
               <View style={styles.rowBetween}>
                 <Text style={styles.subtotal}>Subtotal:</Text>
-                <Text style={styles.subtotal}>${subtotal}</Text>
+                <Text style={styles.subtotal}>${subtotal.toFixed(2)}</Text>
               </View>
 
               <View style={styles.rowBetween}>
                 <Text style={styles.subtotal}>Costo de envío:</Text>
-                <Text style={styles.subtotal}>${envio}</Text>
+                <Text style={styles.subtotal}>${envio.toFixed(2)}</Text>
               </View>
+
+              <View style={styles.separator} />
 
               <View style={styles.rowBetween}>
                 <Text style={styles.total}>Total:</Text>
-                <Text style={styles.total}>${total}</Text>
+                <Text style={styles.total}>${total.toFixed(2)}</Text>
               </View>
             </View>
 
             <TouchableOpacity
-              onPress={() => navigation.navigate("Detalles")}
+              onPress={() => {
+                if (cart.length === 0) {
+                  Alert.alert("Carrito vacío", "Agrega productos al carrito primero");
+                  return;
+                }
+                navigation.navigate("Detalles");
+              }}
               style={styles.confirmbtn}
             >
-              <Text style={styles.confirmText}>Confirmar pedido</Text>
+              <Text style={styles.confirmText}>Continuar al Pago</Text>
             </TouchableOpacity>
           </>
         )}
@@ -136,50 +174,110 @@ const CarritoScreen = ({ navigation }: Props) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f7f7f7",
-  },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "900",
     color: "#ff6b00",
-    paddingTop: 70,
-    paddingBottom: 30,
-    backgroundColor: "#Fff",
+    paddingTop: 60,
+    paddingBottom: 15,
+    backgroundColor: "#fff",
     textAlign: "center",
   },
-  empty: { textAlign: "center", color: "#666" },
-
+  activeOrderButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ff6b00",
+    marginHorizontal: 20,
+    marginBottom: 10,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  activeOrderText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+    marginLeft: 6,
+  },
+  container: {
+    flex: 1,
+    padding: 15,
+    backgroundColor: "#f7f7f7",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyText: { 
+    fontSize: 18, 
+    color: "#666", 
+    marginTop: 15, 
+    marginBottom: 25,
+    textAlign: "center",
+  },
+  shopButton: {
+    backgroundColor: "#ff6b00",
+    paddingVertical: 14,
+    paddingHorizontal: 35,
+    borderRadius: 10,
+  },
+  shopButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
   item: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
     backgroundColor: "#fff",
-    padding: 10,
-    elevation: 5,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   img: {
-    width: 90,
-    height: 90,
+    width: 70,
+    height: 70,
     borderRadius: 8,
     resizeMode: "contain",
-    marginRight: 10,
+    marginRight: 12,
   },
-  name: { fontWeight: "900", fontSize: 18 },
-  price: { color: "#999", marginTop: 4, fontSize: 16, fontWeight: "900" },
-  size: { fontWeight: "900", color: "#999", fontSize: 18 },
-
+  placeholderImg: {
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  name: { 
+    fontWeight: "800", 
+    fontSize: 16, 
+    color: "#333",
+    marginBottom: 2,
+  },
+  price: { 
+    color: "#ff6b00", 
+    fontSize: 16, 
+    fontWeight: "800",
+  },
+  size: { 
+    fontWeight: "500", 
+    color: "#666", 
+    fontSize: 14,
+    marginBottom: 8,
+  },
   qtyRow: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 5,
   },
   qtyBtn: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     borderRadius: 6,
     backgroundColor: "#ff6b00",
     alignItems: "center",
@@ -187,47 +285,70 @@ const styles = StyleSheet.create({
   },
   qtyText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "900",
   },
   qtyNumber: {
     marginHorizontal: 12,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#333",
+    minWidth: 20,
+    textAlign: "center",
   },
-
-  footer: {
+  rightSection: {
+    alignItems: "flex-end",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 12,
+    height: 70,
+  },
+  deleteBtn: {
+    padding: 5,
+  },
+  footer: {
+    marginTop: 10,
     backgroundColor: "#fff",
-    borderRadius: 5,
-    elevation: 5,
-    padding: 20,
+    borderRadius: 10,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   rowBetween: {
     flexDirection: "row",
-    width: "100%",
     justifyContent: "space-between",
+    marginBottom: 8,
   },
   subtotal: {
-    color: "#3e3e3eff",
-    fontSize: 20,
+    color: "#555",
+    fontSize: 16,
+    fontWeight: "500",
   },
-  total: { fontSize: 24, fontWeight: "900", color: "#ff6b00" },
-
+  separator: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 10,
+  },
+  total: { 
+    fontSize: 20, 
+    fontWeight: "900", 
+    color: "#ff6b00",
+  },
   confirmbtn: {
-    padding: 20,
+    padding: 16,
     backgroundColor: "#ff6b00",
     width: "100%",
-    marginTop: 10,
+    marginTop: 15,
+    borderRadius: 10,
+    alignItems: "center",
   },
   confirmText: {
     color: "#fff",
-    fontWeight: "900",
+    fontWeight: "800",
     textAlign: "center",
-    fontSize: 20,
+    fontSize: 18,
   },
 });
 
-export default CarritoScreen;
+export default CarritoScreen; 

@@ -1,4 +1,3 @@
-// CartContext.tsx
 import React, {
   createContext,
   useContext,
@@ -27,77 +26,130 @@ export type PaymentMethod = {
 
 export type Order = {
   id: string;
-  items: any[];
+  items: CartItem[];
   address: string;
-  createdAt: number; // timestamp
-  estimatedDelivery: number; // timestamp
+  createdAt: number;
+  estimatedDelivery: number;
+  userLatitude?: number;
+  userLongitude?: number;
+  userZone?: string;
+  orderNumber: string;
 };
 
 export type UserAddress = {
   id: string;
   label: string;
   fullAddress: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 type CartContextType = {
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
-
   increaseQuantity: (id: string) => void;
   decreaseQuantity: (id: string) => void;
-
   removeFromCart: (id: string) => void;
   clearCart: () => void;
-
+  
   direcciones: UserAddress[];
   addDireccion: (dir: UserAddress) => Promise<void>;
   removeDireccion: (id: string) => Promise<void>; 
   clearDirecciones: () => Promise<void>; 
   selectedDireccionId: string | null;
   setSelectedDireccion: (id: string | null) => Promise<void>;
-
+  
   pagos: PaymentMethod[];
   addPago: (pago: PaymentMethod) => Promise<void>;
   removePago: (id: string) => Promise<void>; 
   clearPagos: () => Promise<void>; 
   selectedPaymentId: string | null;
   setSelectedPayment: (id: string | null) => Promise<void>;
+  
+  // NUEVAS PROPIEDADES AÑADIDAS
+  activeOrder: Order | null;
+  setActiveOrder: (order: Order | null) => Promise<void>;
+  hasActiveOrder: boolean;
+  getOrderById: (orderId: string) => Promise<Order | null>;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-
   const [direcciones, setDirecciones] = useState<UserAddress[]>([]);
-  const [selectedDireccionId, setSelectedDireccionIdState] = useState<
-    string | null
-  >(null);
-
+  const [selectedDireccionId, setSelectedDireccionIdState] = useState<string | null>(null);
   const [pagos, setPagos] = useState<PaymentMethod[]>([]);
-  const [selectedPaymentId, setSelectedPaymentIdState] = useState<
-    string | null
-  >(null);
+  const [selectedPaymentId, setSelectedPaymentIdState] = useState<string | null>(null);
+  const [activeOrder, setActiveOrderState] = useState<Order | null>(null);
+  const [hasActiveOrderState, setHasActiveOrderState] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      const storedDirecciones = await AsyncStorage.getItem("@direcciones");
-      if (storedDirecciones) setDirecciones(JSON.parse(storedDirecciones));
-
-      const storedSelectedDir = await AsyncStorage.getItem(
-        "@selected_direccion"
-      );
-      if (storedSelectedDir) setSelectedDireccionIdState(storedSelectedDir);
-
-      const storedPagos = await AsyncStorage.getItem("@pagos");
-      if (storedPagos) setPagos(JSON.parse(storedPagos));
-
-      const storedSelectedPago = await AsyncStorage.getItem("@selected_pago");
-      if (storedSelectedPago) setSelectedPaymentIdState(storedSelectedPago);
-    })();
+    loadInitialData();
   }, []);
 
-  // --- Helpers direcciones ---
+  const loadInitialData = async () => {
+    try {
+      const [
+        storedDirecciones, 
+        storedSelectedDir, 
+        storedPagos, 
+        storedSelectedPago,
+        storedActiveOrder
+      ] = await Promise.all([
+        AsyncStorage.getItem("@direcciones"),
+        AsyncStorage.getItem("@selected_direccion"),
+        AsyncStorage.getItem("@pagos"),
+        AsyncStorage.getItem("@selected_pago"),
+        AsyncStorage.getItem("@active_order")
+      ]);
+
+      if (storedDirecciones) setDirecciones(JSON.parse(storedDirecciones));
+      if (storedSelectedDir) setSelectedDireccionIdState(storedSelectedDir);
+      if (storedPagos) setPagos(JSON.parse(storedPagos));
+      if (storedSelectedPago) setSelectedPaymentIdState(storedSelectedPago);
+      if (storedActiveOrder) {
+        const order = JSON.parse(storedActiveOrder);
+        setActiveOrderState(order);
+        setHasActiveOrderState(true);
+      }
+    } catch (error) {
+      console.error('Error loading cart data:', error);
+    }
+  };
+
+  // --- Pedidos activos ---
+  const setActiveOrder = async (order: Order | null) => {
+    setActiveOrderState(order);
+    setHasActiveOrderState(!!order);
+    
+    if (order) {
+      await AsyncStorage.setItem("@active_order", JSON.stringify(order));
+      
+      // También guardar en historial
+      const storedOrders = await AsyncStorage.getItem("@orders");
+      const orders: Order[] = storedOrders ? JSON.parse(storedOrders) : [];
+      orders.unshift(order);
+      await AsyncStorage.setItem("@orders", JSON.stringify(orders));
+    } else {
+      await AsyncStorage.removeItem("@active_order");
+    }
+  };
+
+  const getOrderById = async (orderId: string): Promise<Order | null> => {
+    try {
+      const storedOrders = await AsyncStorage.getItem("@orders");
+      if (!storedOrders) return null;
+      
+      const orders: Order[] = JSON.parse(storedOrders);
+      return orders.find(order => order.id === orderId) || null;
+    } catch (error) {
+      console.error('Error getting order:', error);
+      return null;
+    }
+  };
+
+  // --- Direcciones ---
   const persistDirecciones = async (list: UserAddress[]) => {
     setDirecciones(list);
     await AsyncStorage.setItem("@direcciones", JSON.stringify(list));
@@ -149,7 +201,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  // ✅ NUEVO
   const increaseQuantity = (id: string) => {
     setCart((prev) =>
       prev.map((i) =>
@@ -158,14 +209,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  // ✅ NUEVO
   const decreaseQuantity = (id: string) => {
     setCart((prev) =>
       prev
         .map((i) =>
-          i.id === id ? { ...i, quantity: (i.quantity || 1) - 1 } : i
+          i.id === id ? { ...i, quantity: Math.max(1, (i.quantity || 1) - 1) } : i
         )
-        .filter((i) => (i.quantity || 0) > 0)
     );
   };
 
@@ -205,16 +254,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         direcciones,
         addDireccion,
-        removeDireccion, // ✅ nuevo
-        clearDirecciones, // ✅ nuevo
+        removeDireccion,
+        clearDirecciones,
         selectedDireccionId,
         setSelectedDireccion,
         pagos,
         addPago,
-        removePago, // ✅ nuevo
-        clearPagos, // ✅ nuevo
+        removePago,
+        clearPagos,
         selectedPaymentId,
         setSelectedPayment,
+        // NUEVAS PROPIEDADES EXPORTADAS
+        activeOrder,
+        setActiveOrder,
+        hasActiveOrder: hasActiveOrderState,
+        getOrderById,
       }}
     >
       {children}
